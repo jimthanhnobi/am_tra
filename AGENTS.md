@@ -1,0 +1,55 @@
+# TeaPremium — hướng dẫn làm việc
+
+## Mục tiêu và phạm vi
+
+- Xây dựng catalog trà cụ cao cấp ưu tiên SEO, custom CMS, quản trị và thu lead.
+- MVP phục vụ một shop, chỉ `vi-VN`; cấu trúc phải sẵn sàng cho i18n nhưng không tạo bản dịch giả.
+- Không hiển thị giá công khai; không cart, order, checkout, payment hay nút đặt hàng online. Không tạo bảng commerce trong MVP.
+- Không tự suy đoán thông tin shop, địa chỉ, liên hệ, xuất xứ, chứng nhận hoặc dữ liệu sản phẩm.
+
+## Kiến trúc và dependency
+
+- Modular Monolith, một PostgreSQL; backend gồm `Api`, `Application`, `Domain`, `Infrastructure`; frontend là một Next.js App Router cho storefront và Admin.
+- Dependency: `Domain` độc lập; `Application` chỉ phụ thuộc `Domain`; `Infrastructure` triển khai interface của `Application`; `Api` chỉ ghép HTTP/auth/DI. Module trao đổi qua application interface hoặc internal event, không gọi HTTP nội bộ.
+- Controller mỏng, nghiệp vụ nằm trong use case/domain. Không dùng microservices, CQRS framework, generic repository, Redis, Elasticsearch hoặc Kafka nếu chưa có nhu cầu đã đo.
+- API dùng `/api/v1/public/*` và `/api/v1/admin/*`; public DTO không được rò rỉ dữ liệu Draft/Archived, giá hoặc trường quản trị.
+
+## Naming và coding conventions
+
+- C#: PascalCase cho type/member, camelCase cho local/parameter, hậu tố `Async`, bật nullable, truyền `CancellationToken`; thời gian lưu UTC.
+- TypeScript: `strict`, component/type PascalCase, function/variable camelCase; ưu tiên Server Components, chỉ dùng Client Components khi cần tương tác trình duyệt.
+- URL/slug dùng chữ thường không dấu và kebab-case; database dùng snake_case; tên route/API ổn định, không đưa ID vào public URL.
+- Không trả EF entity trực tiếp. Validate ở biên hệ thống, trả lỗi `application/problem+json`, không lộ stack trace. Tránh abstraction sớm và code dùng chung không có consumer thật.
+
+## Security
+
+- Dùng ASP.NET Core Identity và authorization policy ở API; không coi việc ẩn UI là phân quyền.
+- Không hardcode/commit secret, không lưu token trong `localStorage`; session Admin dùng cookie `Secure`, `HttpOnly`, `SameSite` phù hợp và bảo vệ CSRF cho mutation.
+- Sanitize rich HTML phía server; encode output; rate-limit login, lead và upload; kiểm tra MIME/magic bytes/kích thước file; không log token hoặc PII đầy đủ.
+- Không tự chạy migration khi Production startup. Migration Production là bước deploy có review, backup và rollback/forward-fix plan.
+
+## SEO và publishing
+
+- Các trang public Published phải có HTML nội dung chính và metadata được render/prerender phía server; không phụ thuộc client fetch để index.
+- Chỉ `Published` và indexable xuất hiện trong API public/sitemap. Draft, Archived, Admin, Preview và tìm kiếm nội bộ không được index.
+- Mỗi trang indexable có title, description, canonical, H1 hợp lý và metadata social; slug Published đổi phải có redirect 301.
+- JSON-LD phải phản ánh dữ liệu thật. Không tạo `Offer`, giá `0`, availability, rating/review hoặc thông tin shop giả.
+- Giữ `/tim-kiem` noindex; filter/sort không tự sinh landing page indexable. Ảnh cần dimensions và ALT đúng thực tế.
+
+## Kiểm tra và lệnh dự kiến
+
+Các lệnh dưới đây chỉ có hiệu lực sau khi scaffold; cập nhật file này nếu cấu trúc hoặc package manager được chốt khác đi.
+
+```powershell
+dotnet restore backend/TeaPremium.sln
+dotnet build backend/TeaPremium.sln --no-restore
+dotnet test backend/TeaPremium.sln --no-build
+npm --prefix apps/web run lint
+npm --prefix apps/web run typecheck
+npm --prefix apps/web test
+npm --prefix apps/web run build
+```
+
+- Mọi thay đổi phải có kiểm tra phù hợp và báo đúng lệnh đã chạy; không nhận pass nếu lệnh chưa chạy/không tồn tại.
+- Test tối thiểu theo rủi ro: unit cho rule nghiệp vụ, integration cho EF/PostgreSQL và auth, contract cho API, E2E cho publish → public HTML → contact, SEO smoke cho metadata/canonical/sitemap/redirect.
+
