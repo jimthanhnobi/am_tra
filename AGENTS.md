@@ -36,18 +36,18 @@
 - JSON-LD phải phản ánh dữ liệu thật. Không tạo `Offer`, giá `0`, availability, rating/review hoặc thông tin shop giả.
 - Giữ `/tim-kiem` noindex; filter/sort không tự sinh landing page indexable. Ảnh cần dimensions và ALT đúng thực tế.
 
-## Kiểm tra và lệnh dự kiến
+## Kiểm tra và lệnh chuẩn
 
-Các lệnh dưới đây chỉ có hiệu lực sau khi scaffold; cập nhật file này nếu cấu trúc hoặc package manager được chốt khác đi.
+Chạy từ repository root; cập nhật file này nếu cấu trúc hoặc package manager được chốt khác đi.
 
 ```powershell
-dotnet restore backend/TeaPremium.sln
-dotnet build backend/TeaPremium.sln --no-restore
-dotnet test backend/TeaPremium.sln --no-build
-npm --prefix apps/web run lint
-npm --prefix apps/web run typecheck
-npm --prefix apps/web test
-npm --prefix apps/web run build
+dotnet restore backend/TeaPremium.sln --locked-mode
+dotnet build backend/TeaPremium.sln --configuration Release --no-restore
+dotnet test backend/TeaPremium.sln --configuration Release --no-build
+corepack pnpm --dir apps/web install --frozen-lockfile
+corepack pnpm --dir apps/web lint
+corepack pnpm --dir apps/web typecheck
+corepack pnpm --dir apps/web build
 ```
 
 - Mọi thay đổi phải có kiểm tra phù hợp và báo đúng lệnh đã chạy; không nhận pass nếu lệnh chưa chạy/không tồn tại.

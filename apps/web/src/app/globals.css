@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f3efe6;
+  --foreground: #1d2923;
+  --muted: #66736c;
+  --line: #d8d1c3;
+  --accent: #8d4f34;
+  --pine: #183c31;
+  --paper: #fbf8f1;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-be-vietnam);
+  --font-serif: var(--font-lora);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  color: var(--paper);
+  background: var(--pine);
+}
+
+.tea-grid {
+  background-image:
+    linear-gradient(to right, rgb(24 60 49 / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(24 60 49 / 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+

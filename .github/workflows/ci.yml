@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.11-alpine3.24
+        env:
+          POSTGRES_DB: teapremium_tests
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d teapremium_tests"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEAPREMIUM_TEST_CONNECTION_STRING: Host=127.0.0.1;Port=5432;Database=teapremium_tests;Username=postgres;Password=postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.204
+      - name: Restore
+        run: dotnet restore backend/TeaPremium.sln --locked-mode
+      - name: Build
+        run: dotnet build backend/TeaPremium.sln --configuration Release --no-restore
+      - name: Test
+        run: dotnet test backend/TeaPremium.sln --configuration Release --no-build
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.2
+      - name: Activate pnpm
+        run: corepack prepare pnpm@12.16.1 --activate
+      - name: Install
+        run: corepack pnpm --dir apps/web install --frozen-lockfile
+      - name: Lint
+        run: corepack pnpm --dir apps/web lint
+      - name: Typecheck
+        run: corepack pnpm --dir apps/web typecheck
+      - name: Build
+        run: corepack pnpm --dir apps/web build
+
