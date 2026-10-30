@@ -22,6 +22,308 @@ namespace TeaPremium.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("claim_type");
+
+                    b.Property<string>("ClaimValue")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("claim_value");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("role_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_identity_role_claims");
+
+                    b.HasIndex("RoleId", "ClaimType", "ClaimValue")
+                        .IsUnique()
+                        .HasDatabaseName("ux_identity_role_claims_role_type_value");
+
+                    b.ToTable("identity_role_claims", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            ClaimType = "permission",
+                            ClaimValue = "Catalog.Read",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000001")
+                        },
+                        new
+                        {
+                            Id = 2,
+                            ClaimType = "permission",
+                            ClaimValue = "Catalog.Write",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000001")
+                        },
+                        new
+                        {
+                            Id = 3,
+                            ClaimType = "permission",
+                            ClaimValue = "Catalog.Publish",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000001")
+                        },
+                        new
+                        {
+                            Id = 4,
+                            ClaimType = "permission",
+                            ClaimValue = "Content.Read",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000001")
+                        },
+                        new
+                        {
+                            Id = 5,
+                            ClaimType = "permission",
+                            ClaimValue = "Content.Write",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000001")
+                        },
+                        new
+                        {
+                            Id = 6,
+                            ClaimType = "permission",
+                            ClaimValue = "Content.Publish",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000001")
+                        },
+                        new
+                        {
+                            Id = 7,
+                            ClaimType = "permission",
+                            ClaimValue = "Leads.Read",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000001")
+                        },
+                        new
+                        {
+                            Id = 8,
+                            ClaimType = "permission",
+                            ClaimValue = "Leads.Manage",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000001")
+                        },
+                        new
+                        {
+                            Id = 9,
+                            ClaimType = "permission",
+                            ClaimValue = "SEO.Manage",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000001")
+                        },
+                        new
+                        {
+                            Id = 10,
+                            ClaimType = "permission",
+                            ClaimValue = "Settings.Manage",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000001")
+                        },
+                        new
+                        {
+                            Id = 11,
+                            ClaimType = "permission",
+                            ClaimValue = "Users.Manage",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000001")
+                        },
+                        new
+                        {
+                            Id = 12,
+                            ClaimType = "permission",
+                            ClaimValue = "Catalog.Read",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000002")
+                        },
+                        new
+                        {
+                            Id = 13,
+                            ClaimType = "permission",
+                            ClaimValue = "Catalog.Write",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000002")
+                        },
+                        new
+                        {
+                            Id = 14,
+                            ClaimType = "permission",
+                            ClaimValue = "Content.Read",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000002")
+                        },
+                        new
+                        {
+                            Id = 15,
+                            ClaimType = "permission",
+                            ClaimValue = "Content.Write",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000002")
+                        },
+                        new
+                        {
+                            Id = 16,
+                            ClaimType = "permission",
+                            ClaimValue = "SEO.Manage",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000002")
+                        },
+                        new
+                        {
+                            Id = 17,
+                            ClaimType = "permission",
+                            ClaimValue = "Catalog.Read",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000003")
+                        },
+                        new
+                        {
+                            Id = 18,
+                            ClaimType = "permission",
+                            ClaimValue = "Catalog.Write",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000003")
+                        },
+                        new
+                        {
+                            Id = 19,
+                            ClaimType = "permission",
+                            ClaimValue = "Catalog.Publish",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000003")
+                        },
+                        new
+                        {
+                            Id = 20,
+                            ClaimType = "permission",
+                            ClaimValue = "Content.Read",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000003")
+                        },
+                        new
+                        {
+                            Id = 21,
+                            ClaimType = "permission",
+                            ClaimValue = "Content.Write",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000003")
+                        },
+                        new
+                        {
+                            Id = 22,
+                            ClaimType = "permission",
+                            ClaimValue = "Content.Publish",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000003")
+                        },
+                        new
+                        {
+                            Id = 23,
+                            ClaimType = "permission",
+                            ClaimValue = "SEO.Manage",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000003")
+                        });
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("claim_type");
+
+                    b.Property<string>("ClaimValue")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("claim_value");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_identity_user_claims");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_identity_user_claims_user_id");
+
+                    b.ToTable("identity_user_claims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("login_provider");
+
+                    b.Property<string>("ProviderKey")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("provider_key");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("text")
+                        .HasColumnName("provider_display_name");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("LoginProvider", "ProviderKey")
+                        .HasName("pk_identity_user_logins");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_identity_user_logins_user_id");
+
+                    b.ToTable("identity_user_logins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("role_id");
+
+                    b.HasKey("UserId", "RoleId")
+                        .HasName("pk_identity_user_roles");
+
+                    b.HasIndex("RoleId")
+                        .HasDatabaseName("ix_identity_user_roles_role_id");
+
+                    b.ToTable("identity_user_roles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("LoginProvider")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("login_provider");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("text")
+                        .HasColumnName("value");
+
+                    b.HasKey("UserId", "LoginProvider", "Name")
+                        .HasName("pk_identity_user_tokens");
+
+                    b.ToTable("identity_user_tokens", (string)null);
+                });
+
             modelBuilder.Entity("TeaPremium.Domain.Catalog.Brand", b =>
                 {
                     b.Property<Guid>("Id")
@@ -377,6 +679,202 @@ namespace TeaPremium.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("ck_product_media_sort_order_non_negative", "sort_order >= 0");
                         });
+                });
+
+            modelBuilder.Entity("TeaPremium.Infrastructure.Identity.ApplicationRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text")
+                        .HasColumnName("concurrency_stamp");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("normalized_name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_identity_roles");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("ux_identity_roles_normalized_name")
+                        .HasFilter("normalized_name IS NOT NULL");
+
+                    b.ToTable("identity_roles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000001"),
+                            ConcurrencyStamp = "20000000-0000-0000-0000-000000000001",
+                            Name = "Admin",
+                            NormalizedName = "ADMIN"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000002"),
+                            ConcurrencyStamp = "20000000-0000-0000-0000-000000000002",
+                            Name = "Editor",
+                            NormalizedName = "EDITOR"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000003"),
+                            ConcurrencyStamp = "20000000-0000-0000-0000-000000000003",
+                            Name = "Publisher",
+                            NormalizedName = "PUBLISHER"
+                        });
+                });
+
+            modelBuilder.Entity("TeaPremium.Infrastructure.Identity.ApplicationUser", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("access_failed_count");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text")
+                        .HasColumnName("concurrency_stamp");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("email");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("boolean")
+                        .HasColumnName("email_confirmed");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("lockout_enabled");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("lockout_end");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("normalized_email");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("normalized_user_name");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("text")
+                        .HasColumnName("password_hash");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("phone_number");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("boolean")
+                        .HasColumnName("phone_number_confirmed");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("text")
+                        .HasColumnName("security_stamp");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("two_factor_enabled");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("user_name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_identity_users");
+
+                    b.HasIndex("NormalizedEmail")
+                        .IsUnique()
+                        .HasDatabaseName("ux_identity_users_normalized_email")
+                        .HasFilter("normalized_email IS NOT NULL");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("ux_identity_users_normalized_user_name")
+                        .HasFilter("normalized_user_name IS NOT NULL");
+
+                    b.ToTable("identity_users", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
+                {
+                    b.HasOne("TeaPremium.Infrastructure.Identity.ApplicationRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_identity_role_claims_identity_roles_role_id");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
+                {
+                    b.HasOne("TeaPremium.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_identity_user_claims_identity_users_user_id");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
+                {
+                    b.HasOne("TeaPremium.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_identity_user_logins_identity_users_user_id");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
+                {
+                    b.HasOne("TeaPremium.Infrastructure.Identity.ApplicationRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_identity_user_roles_identity_roles_role_id");
+
+                    b.HasOne("TeaPremium.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_identity_user_roles_identity_users_user_id");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
+                {
+                    b.HasOne("TeaPremium.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_identity_user_tokens_identity_users_user_id");
                 });
 
             modelBuilder.Entity("TeaPremium.Domain.Catalog.Category", b =>

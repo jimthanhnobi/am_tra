@@ -1,6 +1,6 @@
 # Catalog + Media database
 
-Phạm vi hiện tại chỉ gồm 6 bảng Catalog + Media. Identity, Content, Leads, Analytics, Settings và Commerce chưa được tạo trong migration `InitialCatalog`.
+Migration `InitialCatalog` chỉ tạo 6 bảng Catalog + Media bên dưới. Migration `AddAdminIdentity` bổ sung 7 bảng kỹ thuật ASP.NET Core Identity (`identity_users`, `identity_roles`, role/user claims, user roles, logins và tokens); quyết định xác thực và phân quyền được ghi tại [auth.md](auth.md). Content, Leads, Analytics, Settings và Commerce chưa được tạo.
 
 ## ERD
 

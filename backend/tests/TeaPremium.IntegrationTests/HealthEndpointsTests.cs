@@ -2,7 +2,6 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
 
 namespace TeaPremium.IntegrationTests;
 
@@ -17,11 +16,7 @@ public sealed class HealthEndpointsTests : IClassFixture<WebApplicationFactory<P
         _client = factory.WithWebHostBuilder(builder =>
         {
             builder.UseEnvironment("Development");
-            builder.ConfigureAppConfiguration(configuration =>
-                configuration.AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    ["ConnectionStrings:Postgres"] = connectionString,
-                }));
+            builder.UseSetting("ConnectionStrings:Postgres", connectionString);
         })
             .CreateClient(new WebApplicationFactoryClientOptions
             {

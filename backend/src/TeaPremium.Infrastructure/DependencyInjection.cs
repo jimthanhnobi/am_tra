@@ -1,6 +1,11 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TeaPremium.Application.Authentication;
+using TeaPremium.Application.Catalog;
+using TeaPremium.Infrastructure.Catalog;
+using TeaPremium.Infrastructure.Identity;
 using TeaPremium.Infrastructure.Persistence;
 
 namespace TeaPremium.Infrastructure;
@@ -29,6 +34,29 @@ public static class DependencyInjection
                 connectionString,
                 npgsqlOptions => npgsqlOptions.MigrationsAssembly(
                     typeof(AppDbContext).Assembly.GetName().Name)));
+
+        services
+            .AddIdentity<ApplicationUser, ApplicationRole>(options =>
+            {
+                options.User.RequireUniqueEmail = true;
+                options.SignIn.RequireConfirmedAccount = false;
+                options.Stores.SchemaVersion = IdentitySchemaVersions.Version2;
+
+                options.Password.RequiredLength = 12;
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireNonAlphanumeric = true;
+
+                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+            })
+            .AddEntityFrameworkStores<AppDbContext>()
+            .AddDefaultTokenProviders();
+
+        services.AddScoped<IAdminBootstrapper, DevelopmentAdminBootstrapper>();
+        services.AddScoped<IAdminCatalogSummaryQuery, AdminCatalogSummaryQuery>();
 
         return services;
     }

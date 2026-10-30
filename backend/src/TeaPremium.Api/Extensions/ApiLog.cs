@@ -10,5 +10,14 @@ public static partial class ApiLog
         ILogger logger,
         string apiName,
         string apiVersion);
+
+    [LoggerMessage(
+        EventId = 2,
+        Level = LogLevel.Information,
+        Message = "Development admin bootstrap completed. UserCreated={UserCreated}, RoleGranted={RoleGranted}")]
+    public static partial void AdminBootstrapCompleted(
+        ILogger logger,
+        bool userCreated,
+        bool roleGranted);
 }
 

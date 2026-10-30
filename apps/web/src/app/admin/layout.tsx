@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: "Quản trị — đang chuẩn bị",
-  description: "Khu vực quản trị TeaPremium chưa được kích hoạt trong Foundation.",
+  title: "Quản trị",
+  description: "Khu vực quản trị TeaPremium.",
   robots: {
     index: false,
     follow: false,

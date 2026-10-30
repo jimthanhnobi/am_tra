@@ -30,6 +30,13 @@ public sealed class CatalogDatabaseTests(PostgreSqlFixture database)
         [
             "brands",
             "categories",
+            "identity_role_claims",
+            "identity_roles",
+            "identity_user_claims",
+            "identity_user_logins",
+            "identity_user_roles",
+            "identity_user_tokens",
+            "identity_users",
             "media_assets",
             "product_categories",
             "product_media",
