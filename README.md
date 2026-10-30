@@ -135,7 +135,9 @@ Integration tests yêu cầu PostgreSQL thật và biến `TEAPREMIUM_TEST_CONNE
 
 ## Chưa triển khai
 
-- Catalog application use cases/API/Admin UI; Content/CMS/lead modules
-- ASP.NET Core Identity, Admin authentication/authorization
-- Tiptap, Cloudflare R2, GA4, Search Console hoặc live chat
+- Catalog Admin UI; Content/CMS/lead modules
+- Media binary upload, Tiptap, Cloudflare R2, GA4, Search Console hoặc live chat
+- SEO redirect workflow và optimistic concurrency token cho Catalog editor
 - Giá, cart, order, checkout, payment và mọi bảng commerce
+
+Contract và quy tắc Catalog backend được mô tả tại `docs/catalog-api.md`; luồng Identity/cookie/BFF tại `docs/auth.md`.

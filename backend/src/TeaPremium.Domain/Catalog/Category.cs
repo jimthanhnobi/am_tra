@@ -68,4 +68,72 @@ public sealed class Category
     public ICollection<Product> PrimaryProducts { get; } = new List<Product>();
 
     public ICollection<ProductCategory> ProductCategories { get; } = new List<ProductCategory>();
+
+    public void Update(
+        string slug,
+        string name,
+        string descriptionHtml,
+        SeoMetadata seo,
+        Guid? parentId,
+        int sortOrder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(slug);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentNullException.ThrowIfNull(descriptionHtml);
+        ArgumentNullException.ThrowIfNull(seo);
+
+        if (sortOrder < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(sortOrder),
+                sortOrder,
+                "Sort order cannot be negative.");
+        }
+
+        ParentId = parentId;
+        Slug = slug;
+        Name = name;
+        DescriptionHtml = descriptionHtml;
+        SortOrder = sortOrder;
+        Seo = seo;
+        Touch();
+    }
+
+    public void MoveToInReview()
+    {
+        if (Status != PublicationStatus.Draft)
+        {
+            throw new InvalidOperationException("Only Draft categories can move to InReview.");
+        }
+
+        Status = PublicationStatus.InReview;
+        Touch();
+    }
+
+    public void Publish()
+    {
+        if (Status != PublicationStatus.InReview)
+        {
+            throw new InvalidOperationException("Only InReview categories can be published.");
+        }
+
+        Status = PublicationStatus.Published;
+        Touch();
+    }
+
+    public void Archive()
+    {
+        if (Status != PublicationStatus.Published)
+        {
+            throw new InvalidOperationException("Only Published categories can be archived.");
+        }
+
+        Status = PublicationStatus.Archived;
+        Touch();
+    }
+
+    private void Touch()
+    {
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
+    }
 }

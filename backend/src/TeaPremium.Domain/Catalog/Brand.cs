@@ -26,4 +26,14 @@ public sealed class Brand
     public string? Origin { get; private set; }
 
     public ICollection<Product> Products { get; } = new List<Product>();
+
+    public void Update(string name, string slug, string? origin)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(slug);
+
+        Name = name;
+        Slug = slug;
+        Origin = origin;
+    }
 }

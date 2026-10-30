@@ -58,4 +58,25 @@ public sealed class ProductMedia
     public Product Product { get; private set; } = null!;
 
     public MediaAsset Asset { get; private set; } = null!;
+
+    public void Update(string altText, int sortOrder)
+    {
+        ArgumentNullException.ThrowIfNull(altText);
+
+        if (sortOrder < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(sortOrder),
+                sortOrder,
+                "Sort order cannot be negative.");
+        }
+
+        AltText = altText;
+        SortOrder = sortOrder;
+    }
+
+    public void SetCover(bool isCover)
+    {
+        IsCover = isCover;
+    }
 }

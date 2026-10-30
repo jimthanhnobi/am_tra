@@ -17,13 +17,19 @@ internal sealed class AdminCatalogSummaryQuery(AppDbContext dbContext) : IAdminC
             .ToDictionaryAsync(item => item.Status, item => item.Count, cancellationToken);
 
         var total = counts.Values.Sum();
+        var categories = await dbContext.Categories.CountAsync(cancellationToken);
+        var brands = await dbContext.Brands.CountAsync(cancellationToken);
+        var mediaAssets = await dbContext.MediaAssets.CountAsync(cancellationToken);
 
         return new AdminCatalogSummary(
             total,
             GetCount(PublicationStatus.Draft),
             GetCount(PublicationStatus.InReview),
             GetCount(PublicationStatus.Published),
-            GetCount(PublicationStatus.Archived));
+            GetCount(PublicationStatus.Archived),
+            categories,
+            brands,
+            mediaAssets);
 
         int GetCount(PublicationStatus status) => counts.GetValueOrDefault(status);
     }

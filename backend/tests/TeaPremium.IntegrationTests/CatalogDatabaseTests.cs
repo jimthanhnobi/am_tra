@@ -38,6 +38,7 @@ public sealed class CatalogDatabaseTests(PostgreSqlFixture database)
             "identity_user_tokens",
             "identity_users",
             "media_assets",
+            "media_upload_sessions",
             "product_categories",
             "product_media",
             "products",

@@ -5,6 +5,7 @@ public static class Permissions
     public const string CatalogRead = "Catalog.Read";
     public const string CatalogWrite = "Catalog.Write";
     public const string CatalogPublish = "Catalog.Publish";
+    public const string MediaWrite = "Media.Write";
     public const string ContentRead = "Content.Read";
     public const string ContentWrite = "Content.Write";
     public const string ContentPublish = "Content.Publish";
@@ -27,5 +28,6 @@ public static class Permissions
         SeoManage,
         SettingsManage,
         UsersManage,
+        MediaWrite,
     ]);
 }

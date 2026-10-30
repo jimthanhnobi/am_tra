@@ -215,6 +215,27 @@ namespace TeaPremium.Infrastructure.Persistence.Migrations
                             ClaimType = "permission",
                             ClaimValue = "SEO.Manage",
                             RoleId = new Guid("10000000-0000-0000-0000-000000000003")
+                        },
+                        new
+                        {
+                            Id = 24,
+                            ClaimType = "permission",
+                            ClaimValue = "Media.Write",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000001")
+                        },
+                        new
+                        {
+                            Id = 25,
+                            ClaimType = "permission",
+                            ClaimValue = "Media.Write",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000002")
+                        },
+                        new
+                        {
+                            Id = 26,
+                            ClaimType = "permission",
+                            ClaimValue = "Media.Write",
+                            RoleId = new Guid("10000000-0000-0000-0000-000000000003")
                         });
                 });
 
@@ -626,6 +647,86 @@ namespace TeaPremium.Infrastructure.Persistence.Migrations
                             t.HasCheckConstraint("ck_media_assets_height_positive", "height > 0");
 
                             t.HasCheckConstraint("ck_media_assets_width_positive", "width > 0");
+                        });
+                });
+
+            modelBuilder.Entity("TeaPremium.Domain.Media.MediaUploadSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AssetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("asset_id");
+
+                    b.Property<DateTimeOffset?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at_utc");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("content_type");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_user_id");
+
+                    b.Property<long>("ExpectedByteSize")
+                        .HasColumnType("bigint")
+                        .HasColumnName("expected_byte_size");
+
+                    b.Property<DateTimeOffset>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at_utc");
+
+                    b.Property<string>("ObjectKey")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("object_key");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("original_file_name");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("pk_media_upload_sessions");
+
+                    b.HasIndex("AssetId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_media_upload_sessions_asset_id_not_null")
+                        .HasFilter("asset_id IS NOT NULL");
+
+                    b.HasIndex("CreatedByUserId")
+                        .HasDatabaseName("ix_media_upload_sessions_created_by_user_id");
+
+                    b.HasIndex("ObjectKey")
+                        .IsUnique()
+                        .HasDatabaseName("ux_media_upload_sessions_object_key");
+
+                    b.HasIndex("Status", "ExpiresAtUtc")
+                        .HasDatabaseName("ix_media_upload_sessions_status_expires_at_utc");
+
+                    b.ToTable("media_upload_sessions", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_media_upload_sessions_expected_byte_size_positive", "expected_byte_size > 0");
+
+                            t.HasCheckConstraint("ck_media_upload_sessions_expiry_after_creation", "expires_at_utc > created_at_utc");
                         });
                 });
 
@@ -1046,6 +1147,17 @@ namespace TeaPremium.Infrastructure.Persistence.Migrations
                     b.Navigation("Category");
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("TeaPremium.Domain.Media.MediaUploadSession", b =>
+                {
+                    b.HasOne("TeaPremium.Domain.Media.MediaAsset", "Asset")
+                        .WithOne()
+                        .HasForeignKey("TeaPremium.Domain.Media.MediaUploadSession", "AssetId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_media_upload_sessions_media_assets_asset_id");
+
+                    b.Navigation("Asset");
                 });
 
             modelBuilder.Entity("TeaPremium.Domain.Media.ProductMedia", b =>

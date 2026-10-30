@@ -1,4 +1,7 @@
+using Ganss.Xss;
 using Microsoft.Extensions.DependencyInjection;
+using TeaPremium.Application.Catalog;
+using TeaPremium.Application.Media;
 
 namespace TeaPremium.Application;
 
@@ -7,6 +10,11 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
+
+        services.AddScoped<HtmlSanitizer>();
+        services.AddScoped<ICatalogService, CatalogService>();
+        services.AddScoped<IMediaService, MediaService>();
+        services.AddSingleton(TimeProvider.System);
 
         return services;
     }

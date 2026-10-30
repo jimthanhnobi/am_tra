@@ -101,4 +101,108 @@ public sealed class Product
     public ICollection<ProductCategory> ProductCategories { get; } = new List<ProductCategory>();
 
     public ICollection<ProductMedia> Media { get; } = new List<ProductMedia>();
+
+    public void Update(
+        string slug,
+        string name,
+        string summary,
+        string descriptionJson,
+        string descriptionHtml,
+        string productType,
+        string specsJson,
+        SeoMetadata seo,
+        IReadOnlyCollection<Guid> categoryIds,
+        string? sku = null,
+        Guid? primaryCategoryId = null,
+        Guid? brandId = null,
+        string? materialText = null,
+        int? capacityMl = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(slug);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentNullException.ThrowIfNull(summary);
+        ArgumentNullException.ThrowIfNull(descriptionHtml);
+        ArgumentException.ThrowIfNullOrWhiteSpace(productType);
+        ArgumentNullException.ThrowIfNull(seo);
+        ArgumentNullException.ThrowIfNull(categoryIds);
+
+        if (capacityMl is <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(capacityMl),
+                capacityMl,
+                "Capacity must be greater than zero when specified.");
+        }
+
+        Slug = slug;
+        Name = name;
+        Summary = summary;
+        DescriptionJson = JsonObjectValidator.EnsureObject(descriptionJson, nameof(descriptionJson));
+        DescriptionHtml = descriptionHtml;
+        ProductType = productType;
+        SpecsJson = JsonObjectValidator.EnsureObject(specsJson, nameof(specsJson));
+        Seo = seo;
+        Sku = sku;
+        PrimaryCategoryId = primaryCategoryId;
+        BrandId = brandId;
+        MaterialText = materialText;
+        CapacityMl = capacityMl;
+
+        var requestedCategoryIds = categoryIds.ToHashSet();
+        foreach (var link in ProductCategories
+                     .Where(link => !requestedCategoryIds.Contains(link.CategoryId))
+                     .ToArray())
+        {
+            ProductCategories.Remove(link);
+        }
+
+        var existingCategoryIds = ProductCategories
+            .Select(link => link.CategoryId)
+            .ToHashSet();
+        foreach (var categoryId in requestedCategoryIds.Except(existingCategoryIds))
+        {
+            ProductCategories.Add(new ProductCategory(Id, categoryId));
+        }
+
+        Touch();
+    }
+
+    public void MoveToInReview()
+    {
+        if (Status != PublicationStatus.Draft)
+        {
+            throw new InvalidOperationException("Only Draft products can move to InReview.");
+        }
+
+        Status = PublicationStatus.InReview;
+        Touch();
+    }
+
+    public void Publish(DateTimeOffset publishedAtUtc)
+    {
+        if (Status != PublicationStatus.InReview)
+        {
+            throw new InvalidOperationException("Only InReview products can be published.");
+        }
+
+        Status = PublicationStatus.Published;
+        PublishedAt = publishedAtUtc.ToUniversalTime();
+        Touch(publishedAtUtc);
+    }
+
+    public void Archive(DateTimeOffset updatedAtUtc)
+    {
+        if (Status != PublicationStatus.Published)
+        {
+            throw new InvalidOperationException("Only Published products can be archived.");
+        }
+
+        Status = PublicationStatus.Archived;
+        Touch(updatedAtUtc);
+    }
+
+    public void Touch(DateTimeOffset? updatedAtUtc = null)
+    {
+        UpdatedAtUtc = (updatedAtUtc ?? DateTimeOffset.UtcNow).ToUniversalTime();
+    }
 }

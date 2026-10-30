@@ -10,4 +10,7 @@ public sealed record AdminCatalogSummary(
     int Draft,
     int InReview,
     int Published,
-    int Archived);
+    int Archived,
+    int Categories,
+    int Brands,
+    int MediaAssets);

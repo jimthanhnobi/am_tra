@@ -1,8 +1,10 @@
 using System.Diagnostics;
+using System.Security.Claims;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using TeaPremium.Api.Configuration;
+using TeaPremium.Api.ErrorHandling;
 using TeaPremium.Api.HealthChecks;
 using TeaPremium.Api.Routing;
 using TeaPremium.Api.Security;
@@ -39,6 +41,7 @@ public static class DependencyInjection
                     context.HttpContext.TraceIdentifier;
             };
         });
+        services.AddExceptionHandler<CatalogExceptionHandler>();
 
         services.AddControllers(options =>
         {
@@ -111,7 +114,7 @@ public static class DependencyInjection
             {
                 await Results.Problem(
                         statusCode: StatusCodes.Status429TooManyRequests,
-                        title: "Quá nhiều lần thử đăng nhập.",
+                        title: "Quá nhiều yêu cầu.",
                         detail: "Vui lòng thử lại sau.")
                     .ExecuteAsync(context.HttpContext);
             };
@@ -123,6 +126,19 @@ public static class DependencyInjection
                     {
                         AutoReplenishment = true,
                         PermitLimit = 10,
+                        QueueLimit = 0,
+                        Window = TimeSpan.FromMinutes(1),
+                    }));
+            options.AddPolicy(
+                AdminSecurityDefaults.MediaUploadRateLimitPolicy,
+                context => RateLimitPartition.GetFixedWindowLimiter(
+                    context.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+                    context.Connection.RemoteIpAddress?.ToString() ??
+                    "unknown",
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        AutoReplenishment = true,
+                        PermitLimit = 30,
                         QueueLimit = 0,
                         Window = TimeSpan.FromMinutes(1),
                     }));

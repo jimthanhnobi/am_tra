@@ -23,6 +23,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<ProductMedia> ProductMedia => Set<ProductMedia>();
 
+    public DbSet<MediaUploadSession> MediaUploadSessions => Set<MediaUploadSession>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);

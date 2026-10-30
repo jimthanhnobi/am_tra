@@ -129,7 +129,7 @@ internal sealed class IdentityRoleClaimConfiguration : IEntityTypeConfiguration<
     {
         var claimId = 1;
 
-        foreach (var permission in Permissions.All)
+        foreach (var permission in Permissions.All.Where(permission => permission != Permissions.MediaWrite))
         {
             yield return CreateClaim(claimId++, SeededIdentityIds.AdminRoleId, permission);
         }
@@ -159,6 +159,10 @@ internal sealed class IdentityRoleClaimConfiguration : IEntityTypeConfiguration<
         {
             yield return CreateClaim(claimId++, SeededIdentityIds.PublisherRoleId, permission);
         }
+
+        yield return CreateClaim(24, SeededIdentityIds.AdminRoleId, Permissions.MediaWrite);
+        yield return CreateClaim(25, SeededIdentityIds.EditorRoleId, Permissions.MediaWrite);
+        yield return CreateClaim(26, SeededIdentityIds.PublisherRoleId, Permissions.MediaWrite);
     }
 
     private static IdentityRoleClaim<Guid> CreateClaim(int id, Guid roleId, string permission) =>
