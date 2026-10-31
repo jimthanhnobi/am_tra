@@ -16,6 +16,9 @@ test("entity metadata uses SEO overrides, canonical and social fields", () => {
   assert.equal(result.description, "Mô tả");
   assert.equal(result.robots.index, true);
   assert.throws(() => canonicalUrl(site, "/", "javascript:alert(1)"));
+  const fallback = pageMetadata({ ...site, defaultOgImageUrl: "https://media.catalog.test/default.webp" },
+    { path: "/", title: "Home", description: "Description" });
+  assert.deepEqual(fallback.openGraph.images, ["https://media.catalog.test/default.webp"]);
 });
 
 test("deployment gate, search and entity flag independently prevent indexing", () => {

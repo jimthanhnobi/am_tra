@@ -41,8 +41,6 @@ public sealed class Article
     public void Update(string slug, string title, string excerpt, string contentJson, string contentHtml,
         Guid? coverAssetId, SeoMetadata seo, IReadOnlyCollection<Guid> categoryIds)
     {
-        if (Status == PublicationStatus.Published && Slug != slug)
-            throw new InvalidOperationException("Published article slug requires a redirect workflow.");
         Slug = slug;
         Title = title;
         Excerpt = excerpt;

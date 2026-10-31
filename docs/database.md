@@ -1,6 +1,6 @@
 # Catalog + Media database
 
-Migration `InitialCatalog` chỉ tạo 6 bảng Catalog + Media bên dưới. Migration `AddAdminIdentity` bổ sung 7 bảng kỹ thuật ASP.NET Core Identity (`identity_users`, `identity_roles`, role/user claims, user roles, logins và tokens); quyết định xác thực và phân quyền được ghi tại [auth.md](auth.md). Content, Leads, Analytics, Settings và Commerce chưa được tạo.
+Chuỗi migration hiện có: `InitialCatalog`, `AddAdminIdentity`, `AddMediaUploadSessions`, `AddArticles`, `AddLeadFoundation`, `AddSeoRedirectsAndSiteSettings`. Phần ERD dưới đây mô tả lõi Catalog + Media; Content/Leads xem [content-leads.md](content-leads.md), SEO redirect xem [seo-redirects.md](seo-redirects.md), cấu hình site xem [site-settings.md](site-settings.md). Không có bảng Commerce trong MVP.
 
 ## ERD
 
@@ -100,3 +100,8 @@ erDiagram
 - Timestamps dùng `timestamptz`; entity tạo thời gian UTC và database có `now()` default cho insert trực tiếp.
 
 Migration không được chạy tự động khi API Production startup. Production migration phải là deploy step riêng, có review SQL và backup.
+
+## Bổ sung Prompt 8
+
+- `seo_redirects`: `source_path` unique, `destination_path`, `redirect_type=301`, timestamps UTC; check constraint chặn self redirect và chỉ nhận đường dẫn content chuẩn hóa. Application cùng transaction cập nhật entity và redirect, đồng thời chuyển alias cũ đến đích cuối.
+- `site_settings`: singleton `id=1`, public profile/SEO defaults và FK ảnh tới `media_assets`. Chỉ lưu `updated_by_user_id`/`updated_at_utc` cho lần sửa mới nhất; không lưu secret ở bảng này.

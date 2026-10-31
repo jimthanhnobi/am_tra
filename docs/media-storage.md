@@ -22,7 +22,7 @@ For a Development bucket, set its [R2 CORS policy](https://developers.cloudflare
 [
   {
     "AllowedOrigins": ["http://localhost:3000"],
-    "AllowedMethods": ["PUT"],
+    "AllowedMethods": ["GET", "PUT", "HEAD"],
     "AllowedHeaders": ["Content-Type"],
     "ExposeHeaders": ["ETag"],
     "MaxAgeSeconds": 3600

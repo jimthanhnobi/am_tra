@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro, Lora } from "next/font/google";
 import type { ReactNode } from "react";
-import { siteConfig } from "@/lib/config/site";
+import { getSiteContext } from "@/lib/config/site-context";
 import "./globals.css";
 
 const sans = Be_Vietnam_Pro({
@@ -16,27 +16,32 @@ const serif = Lora({
   weight: "variable",
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteConfig.url),
+export async function generateMetadata(): Promise<Metadata> {
+  const { site, faviconUrl, defaultOgImageUrl } = await getSiteContext();
+  return {
+  metadataBase: new URL(site.url),
   title: {
-    default: siteConfig.name,
-    template: `%s · ${siteConfig.name}`,
+    default: site.name,
+    template: `%s · ${site.name}`,
   },
-  description: siteConfig.description,
-  applicationName: siteConfig.name,
+  description: site.description,
+  applicationName: site.name,
+  icons: faviconUrl ? { icon: faviconUrl } : undefined,
   openGraph: {
     type: "website",
     locale: "vi_VN",
-    siteName: siteConfig.name,
-    title: siteConfig.name,
-    description: siteConfig.description,
+    siteName: site.name,
+    title: site.name,
+    description: site.description,
     url: "/",
+    images: defaultOgImageUrl ? [defaultOgImageUrl] : [],
   },
   robots: {
-    index: siteConfig.indexable,
+    index: site.indexable,
     follow: true,
   },
-};
+  };
+}
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (

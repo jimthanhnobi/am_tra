@@ -4,6 +4,7 @@ using TeaPremium.Application.Catalog;
 using TeaPremium.Application.Content;
 using TeaPremium.Application.Leads;
 using TeaPremium.Application.Media;
+using TeaPremium.Application.Settings;
 
 namespace TeaPremium.Application;
 
@@ -19,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<ArticleService>();
         services.AddScoped<LeadService>();
         services.AddScoped<IMediaService, MediaService>();
+        services.AddScoped<SiteSettingsService>();
         services.AddSingleton(TimeProvider.System);
 
         return services;

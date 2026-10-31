@@ -6,6 +6,7 @@ import type { AdminBrand, AdminCategoryNode, AdminProductDetail } from "@/lib/ap
 import { AccessDenied } from "@/components/admin/access-denied";
 import { ProductEditor } from "../../product-editor";
 import { AdminApiError } from "@/lib/api/errors";
+import { getSiteContext } from "@/lib/config/site-context";
 
 
 
@@ -17,9 +18,10 @@ export default async function EditProductPage({ params }: Readonly<{ params: Pro
   let product: AdminProductDetail;
   try { product = await getAdminApi<AdminProductDetail>(`products/${id}`); }
   catch (error) { if (error instanceof AdminApiError && error.status === 404) notFound(); throw error; }
-  const [categories, brands] = await Promise.all([
+  const [categories, brands, { site }] = await Promise.all([
     getAdminApi<AdminCategoryNode[]>("categories"),
     getAdminApi<AdminBrand[]>("brands"),
+    getSiteContext(),
   ]);
-  return <ProductEditor initial={product} categories={categories} brands={brands} canWrite={hasPermission(user!.permissions, permissions.catalogWrite)} canUpload={hasPermission(user!.permissions, permissions.mediaWrite)} canPublish={hasPermission(user!.permissions, permissions.catalogPublish)} />;
+  return <ProductEditor initial={product} categories={categories} brands={brands} canonicalOrigin={site.url} canWrite={hasPermission(user!.permissions, permissions.catalogWrite)} canUpload={hasPermission(user!.permissions, permissions.mediaWrite)} canPublish={hasPermission(user!.permissions, permissions.catalogPublish)} />;
 }

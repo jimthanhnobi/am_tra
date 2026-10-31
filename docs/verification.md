@@ -18,11 +18,21 @@
 | Development đang chạy | PASS | Sau khi dọn stack thử, `GET http://localhost:5080/health/live`, `/health/ready` và `GET http://localhost:3000/admin/login` vẫn trả 200. Trước đó `GET http://localhost:3000/` cũng trả 200. Không gửi mutation tới API/database Development. |
 | Next dev thứ hai cùng checkout | BLOCKED | `next dev --port 3002` báo lock do server trên cổng 3000 đang chạy; không dừng server của người dùng. Browser E2E dùng Next standalone cô lập ở cổng 3002. |
 | R2 config/adapter/flow tĩnh | PASS | Compose map đủ 5 biến R2 vào API, chỉ public base URL vào web; S3 endpoint mặc định, presigned PUT ký `Content-Type`, complete xác minh size/MIME/magic bytes và tạo MediaAsset. Next `remotePatterns` lấy từ public base URL khi build. |
-| R2 upload/CORS/public asset thật | EXTERNAL TEST BLOCKED | Root `.env` chưa có bucket, public read URL hoặc credentials; người dùng đang cấu hình. Chưa thử PUT/complete/public GET với Cloudflare thật; không tuyên bố PASS. S3 endpoint khác public read URL. |
+| R2 ghi/đọc object thật | PASS | Sau khi người dùng cập nhật quyền, S3 PUT và PUT bằng URL ký giống adapter ứng dụng đều trả 200; HEAD trả 200 đúng kích thước, public r2.dev GET trả 200; DELETE cả hai object thử trả 204. Không tạo MediaAsset trong database. |
+| R2 CORS và PUT với browser Origin | PASS | Sau khi người dùng cập nhật bucket CORS, preflight `OPTIONS` cho presigned PUT từ `http://localhost:3000` trả 204 với `Access-Control-Allow-Origin` đúng; PUT có Origin trả 200 với allow-origin đúng, HEAD/public GET và Next image optimization đều 200, cleanup object 204. S3 GetCORS và Cloudflare REST API vẫn trả 403 với token object-scoped, nhưng chính sách CORS thực tế đã được xác minh qua HTTP. |
+| Admin UI upload-intent → complete | NOT RUN | Chưa dùng phiên đăng nhập Admin để tạo MediaAsset qua UI/API; probe đã xác minh R2 và CORS nhưng chưa xác nhận toàn bộ luồng ứng dụng. Có thể thử tại `/admin/media` trên web Development đang chạy. |
 | GitHub Actions remote | NOT RUN | Workflow có PostgreSQL service, restore/build/test và pnpm install/lint/typecheck/SEO/HTTP/build. Chưa commit/push nên không có remote run để xác nhận. |
 | HTTPS Production, GA4/GSC, Lighthouse, R2 Production | NOT RUN | Ngoài phạm vi local/CI, thiếu môi trường/chứng chỉ/account hoặc dữ liệu thật. |
 
 **FAIL còn mở:** không có trong các kiểm tra đã hoàn tất. Các lần chạy lỗi trung gian và nguyên nhân được ghi dưới đây; kết quả PASS chỉ áp dụng cho lần chạy lại cuối.
+
+### Cấu hình R2 Development và dịch vụ đang chạy
+
+Người dùng cung cấp bucket `teapremium-media-dev` và public URL `https://pub-45885a813ed14f6d8fa60b4003a5a2aa.r2.dev`. Đã cấu hình secret trong root `.env` bị Git ignore; web chỉ nhận public URL trong `apps/web/.env.local`. Không ghi token/access key/secret vào repository hoặc báo cáo. `docker compose --env-file .env -f infra/docker/compose.yml config --quiet` PASS. API R2 chạy ở `http://localhost:5081` với readiness 200, web Next dev ở `http://localhost:3000` với `/` và `/admin/login` 200; web trỏ API 5081. Next image proxy chấp nhận hostname r2.dev (URL thử không có object trả 404, không phải lỗi host bị cấm). API cũ ở 5080 và PostgreSQL Development 5432 vẫn chạy; lệnh dừng API cũ bị cơ chế duyệt tự động từ chối, nên không can thiệp.
+
+Probe R2 dùng project C# tạm trong `backend/artifacts/r2-probe` (thư mục bị ignore), AWSSDK.S3 cùng phiên bản backend, đọc credential từ `.env` chỉ trong process. Lệnh chạy: `dotnet run --project backend/artifacts/r2-probe/R2Probe.csproj --configuration Release`. Lần đầu SDK PUT trả 501 vì AWS SDK mặc định thêm cơ chế checksum/streaming R2 không hỗ trợ; đã đặt `DisablePayloadSigning` và `DisableDefaultChecksumValidation` cho probe theo tài liệu Cloudflare. Trước khi người dùng cập nhật quyền, PUT trả 403; sau cập nhật quyền, SDK PUT và PUT bằng URL ký đều OK nhưng preflight CORS còn 403. **Lượt cuối sau khi người dùng cập nhật CORS:** bucket/list OK; preflight 204 và đúng allow-origin; SDK PUT và PUT bằng URL ký có browser Origin đều 200; HEAD đúng kích thước, public GET và Next image optimization 200, DELETE cả hai object thử 204; không còn object thử. File env tạm dùng khởi động container đã được xóa; root `.env` vẫn giữ cấu hình Development.
+
+**Bước xác minh còn lại:** đăng nhập Admin ở `/admin/media`, chọn một ảnh thử, kiểm tra upload-intent → PUT → complete tạo MediaAsset rồi mở public URL. Token object-scoped hiện có không dùng được để gọi Cloudflare REST API quản lý bucket; cần Admin Read & Write nếu sau này tự động hóa việc sửa CORS qua REST API. Xem [Cloudflare token permissions](https://developers.cloudflare.com/r2/api/tokens/) và [CORS policy](https://developers.cloudflare.com/r2/buckets/cors/).
 
 ### Lệnh đã chạy trong 7.1
 
@@ -118,3 +128,25 @@ Frontend local chạy bằng Node `24.18.1` có sẵn trên máy, còn web Docke
 Compose local có service `migrate` profile `tools`, chỉ chạy khi gọi `docker compose ... run --rm migrate`. API startup không gọi `Database.Migrate()`. Production phải sinh SQL script, review nội dung/target, backup database và chuẩn bị rollback hoặc forward fix trước khi apply; không dùng Compose local để deploy. `/health/live` chỉ báo tiến trình, `/health/ready` kiểm tra PostgreSQL và migration còn thiếu. Logging API là JSON có correlation/trace ID, Problem Details trả lỗi HTTP; request logging không ghi body hoặc PII đầy đủ.
 
 Khi chạy sau TLS reverse proxy, cấu hình `TRUSTED_PROXY_IP` bằng đúng IP của proxy mà API nhìn thấy để xử lý forwarded headers; proxy là nơi chuyển HTTP sang HTTPS. Chỉ mẫu cấu hình được thêm, chưa kiểm tra chứng chỉ hay network Production.
+
+## Prompt 8 — SEO redirects và Site Settings (31/10/2026)
+
+Kiểm tra trên Windows với .NET SDK `10.0.302`, Node `24.18.1`, pnpm `12.16.1`, Next `16.4.3`. PostgreSQL test chạy trong container tạm `postgres:17.11-alpine3.24`, database `teapremium_test_p8` trên cổng localhost 5548; `TEAPREMIUM_TEST_CONNECTION_STRING` chỉ trỏ database này. Database Development và volumes cũ không bị xóa hay migrate trong lượt Prompt 8.
+
+| Trạng thái | Lệnh / kiểm tra | Kết quả |
+|---|---|---|
+| PASS | `dotnet restore backend/TeaPremium.sln --locked-mode` | Locked restore thành công. |
+| PASS | `dotnet build backend/TeaPremium.sln --configuration Release --no-restore` | 0 warnings, 0 errors. |
+| PASS | `dotnet test backend/TeaPremium.sln --configuration Release --no-build` | 36 unit + 42 integration, 0 fail/skip; integration dùng PostgreSQL test riêng và áp dụng toàn chuỗi migration tại đó. |
+| PASS | `corepack pnpm --dir apps/web lint` | ESLint 0 warnings. |
+| PASS | `corepack pnpm --dir apps/web typecheck` | Next typegen + TypeScript. |
+| PASS | `corepack pnpm --dir apps/web build` | Production build thành công. |
+| PASS | `corepack pnpm --dir apps/web test:seo` | 6/6. |
+| PASS | `corepack pnpm --dir apps/web test:storefront` | 12/12 HTTP contracts; 301/200, noindex/404, canonical, sitemap, settings. Test tự build Next production với API fixture, không phải browser E2E. |
+| PASS | `git diff --check` và quét mã nguồn cho credential được người dùng cung cấp | Không có whitespace error hoặc credential trong tracked source. Git có cảnh báo chuẩn hóa LF/CRLF. |
+| NOT RUN | Migration trên database Development/Production | Không được thực hiện để giữ nguyên dữ liệu; chỉ database test chạy migration. |
+| NOT RUN | Browser E2E, R2 runtime trong lượt Prompt 8, GitHub Actions remote | Không nằm trong bài tự động đã chạy; không báo PASS. |
+
+Lượt integration đầu có 39/40 PASS: test schema cũ kỳ vọng chính xác danh sách bảng trước Prompt 8. Đã bổ sung `seo_redirects`, `site_settings` vào assertion; lượt cuối 42/42 PASS. Lượt HTTP đầu sai kỳ vọng `Location` tuyệt đối trong khi Next trả `Location` tương đối cùng origin; đã đổi assertion sang URL được resolve. Test Settings ban đầu kỳ vọng canonical gốc có dấu `/`, nhưng helper canonical chủ động chuẩn hóa thành origin; đã sửa assertion theo policy hiện có. Không có failure tồn đọng ở các lệnh tự động cuối.
+
+Giới hạn: chưa chạy browser UI thực tế cho `/admin/settings` và đổi slug trong Admin; chưa áp migration Prompt 8 vào Development, nên API/web đang chạy local từ trước chưa dùng được chức năng mới cho tới khi migrate và restart. CI remote, Production, R2/GA4 thực tế không được suy ra từ các test trên.

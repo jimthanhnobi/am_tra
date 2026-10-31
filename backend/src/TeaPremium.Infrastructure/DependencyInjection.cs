@@ -15,6 +15,10 @@ using TeaPremium.Infrastructure.Leads;
 using TeaPremium.Infrastructure.Identity;
 using TeaPremium.Infrastructure.Media;
 using TeaPremium.Infrastructure.Persistence;
+using TeaPremium.Infrastructure.Seo;
+using TeaPremium.Application.Seo;
+using TeaPremium.Application.Settings;
+using TeaPremium.Infrastructure.Settings;
 
 namespace TeaPremium.Infrastructure;
 
@@ -68,6 +72,8 @@ public static class DependencyInjection
         services.AddScoped<ICatalogDataStore, CatalogDataStore>();
         services.AddScoped<IArticleStore, ArticleStore>();
         services.AddScoped<ILeadStore, LeadStore>();
+        services.AddScoped<ISeoRedirectStore, SeoRedirectStore>();
+        services.AddScoped<ISiteSettingsStore, SiteSettingsStore>();
         services.AddScoped<IMediaDataStore, MediaDataStore>();
 
         ConfigureObjectStorage(services, configuration);

@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getPublicArticles } from "@/lib/api/articles";
-import { siteConfig } from "@/lib/config/site";
+import { getSiteContext } from "@/lib/config/site-context";
 import { pageMetadata, parsePage } from "@/lib/seo/policy";
 import { Breadcrumbs, contentWidth } from "@/components/storefront/catalog";
 
@@ -18,7 +18,8 @@ async function read(props: Props) {
 
 export async function generateMetadata(props: Props) {
   const { query, page, result } = await read(props);
-  return pageMetadata(siteConfig, { path: `/kien-thuc${page > 1 ? `?page=${page}` : ""}`,
+  const { site } = await getSiteContext();
+  return pageMetadata(site, { path: `/kien-thuc${page > 1 ? `?page=${page}` : ""}`,
     title: `Kiến thức${page > 1 ? ` — Trang ${page}` : ""}`,
     description: "Các bài viết đã xuất bản về trà cụ và thưởng trà.",
     index: result.totalItems > 0 && Object.keys(query).every((key) => key === "page"),

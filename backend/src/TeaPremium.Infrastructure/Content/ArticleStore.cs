@@ -37,6 +37,22 @@ internal sealed class ArticleStore(AppDbContext db, IConfiguration configuration
         { throw new ContentConflictException("Article slug already exists."); }
     }
 
+    public async Task ExecuteInTransactionAsync(Func<CancellationToken, Task> operation, CancellationToken cancellationToken)
+    {
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            await operation(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(CancellationToken.None);
+            db.ChangeTracker.Clear();
+            throw;
+        }
+    }
+
     public async Task<ArticleDetail> DetailAsync(Article article, bool includeDraft, CancellationToken ct)
     {
         var categoryIds = article.Categories.Select(x => x.CategoryId).ToArray();

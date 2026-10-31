@@ -35,6 +35,44 @@ public sealed class ContentAndLeadsApiTests : IAsyncLifetime, IDisposable
     public void Dispose() => _factory.Dispose();
 
     [Fact]
+    public async Task SiteSettingsRequirePermissionAndExposeOnlyPublicFields()
+    {
+        using var anonymous = _factory.CreateApiClient();
+        using var editor = await LoginAsync(_editorEmail);
+        using var admin = await LoginAsync(_adminEmail);
+        using (var denied = await anonymous.GetAsync("/api/v1/admin/settings"))
+            Assert.Equal(HttpStatusCode.Unauthorized, denied.StatusCode);
+        using (var forbidden = await editor.GetAsync("/api/v1/admin/settings"))
+            Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+        using (var forbiddenWrite = await SendAdminAsync(editor, HttpMethod.Put,
+            "/api/v1/admin/settings", new { siteName = "Không có quyền" }))
+            Assert.Equal(HttpStatusCode.Forbidden, forbiddenWrite.StatusCode);
+
+        var name = $"Tea test {Guid.NewGuid():N}";
+        using (var invalid = await SendAdminAsync(admin, HttpMethod.Put,
+            "/api/v1/admin/settings", new { siteName = name, zaloUrl = "https://example.com/redirect" }))
+            Assert.Equal(HttpStatusCode.UnprocessableEntity, invalid.StatusCode);
+        using (var saved = await SendAdminAsync(admin, HttpMethod.Put,
+            "/api/v1/admin/settings", new
+            {
+                siteName = name, siteDescription = "Mô tả thử nghiệm", brandTagline = "Trà cụ",
+                hotline = "0912345678", zaloUrl = "https://zalo.me/0912345678",
+                facebookUrl = "https://facebook.com/example", email = "shop@integration.test",
+                publicWebsiteUrl = "https://tea.integration.test",
+                defaultSeoTitle = "Tea test SEO", defaultMetaDescription = "Mô tả SEO",
+            }))
+            Assert.Equal(HttpStatusCode.OK, saved.StatusCode);
+        using var publicResponse = await anonymous.GetAsync("/api/v1/public/settings");
+        Assert.Equal(HttpStatusCode.OK, publicResponse.StatusCode);
+        var body = await publicResponse.Content.ReadAsStringAsync();
+        Assert.Contains(name, body);
+        Assert.DoesNotContain("updatedByUserId", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("secret", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("accessKey", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("password", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task ArticleCrudPreviewVisibilityAndPublishPermission()
     {
         using var admin = await LoginAsync(_adminEmail);
@@ -89,31 +127,43 @@ public sealed class ContentAndLeadsApiTests : IAsyncLifetime, IDisposable
         Assert.DoesNotContain("authorId", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("coverAssetId", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("\"id\":", body, StringComparison.OrdinalIgnoreCase);
+        var changedSlug = $"changed-{slug}";
         using var updateSlug = await SendAdminAsync(admin, HttpMethod.Patch, $"/api/v1/admin/articles/{id}",
-            new { input.title, input.excerpt, slug = $"changed-{slug}", input.contentJson,
+            new { input.title, input.excerpt, slug = changedSlug, input.contentJson,
                 input.coverAssetId, input.categoryIds, input.seo });
-        Assert.Equal(HttpStatusCode.Conflict, updateSlug.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, updateSlug.StatusCode);
+        using var oldRedirect = await publicClient.GetAsync($"/api/v1/public/seo-redirects?sourcePath=/kien-thuc/{slug}");
+        Assert.Equal(HttpStatusCode.OK, oldRedirect.StatusCode);
+        Assert.Contains($"/kien-thuc/{changedSlug}", await oldRedirect.Content.ReadAsStringAsync());
+        using var newArticle = await publicClient.GetAsync($"/api/v1/public/articles/{changedSlug}");
+        Assert.Equal(HttpStatusCode.OK, newArticle.StatusCode);
+        using var duplicateSource = await SendAdminAsync(admin, HttpMethod.Post, "/api/v1/admin/articles",
+            new { input.title, input.excerpt, input.slug, input.contentJson,
+                input.coverAssetId, input.categoryIds, input.seo });
+        Assert.Equal(HttpStatusCode.Conflict, duplicateSource.StatusCode);
         using var noindexUpdate = await SendAdminAsync(admin, HttpMethod.Patch,
             $"/api/v1/admin/articles/{id}", new
             {
-                input.slug, title = "Bài viết đã sửa", input.excerpt, input.contentJson,
+                slug = changedSlug, title = "Bài viết đã sửa", input.excerpt, input.contentJson,
                 input.coverAssetId, input.categoryIds,
                 seo = new { input.seo.seoTitle, input.seo.metaDescription,
                     input.seo.canonicalOverride, robotsIndex = false, input.seo.ogTitle,
                     input.seo.ogDescription, input.seo.ogImageAssetId },
             });
         Assert.Equal(HttpStatusCode.OK, noindexUpdate.StatusCode);
-        using var noindexArticle = await publicClient.GetAsync($"/api/v1/public/articles/{slug}");
+        using var noindexArticle = await publicClient.GetAsync($"/api/v1/public/articles/{changedSlug}");
         Assert.Equal(HttpStatusCode.OK, noindexArticle.StatusCode);
         using var noindexDocument = JsonDocument.Parse(await noindexArticle.Content.ReadAsStringAsync());
         Assert.False(noindexDocument.RootElement.GetProperty("seo").GetProperty("robotsIndex").GetBoolean());
         using var publicList = JsonDocument.Parse(await publicClient.GetStringAsync("/api/v1/public/articles"));
         Assert.Contains(publicList.RootElement.GetProperty("items").EnumerateArray(),
-            item => item.GetProperty("slug").GetString() == slug);
+            item => item.GetProperty("slug").GetString() == changedSlug);
         using var archive = await SendAdminAsync(admin, HttpMethod.Post, $"/api/v1/admin/articles/{id}/archive");
         Assert.Equal(HttpStatusCode.OK, archive.StatusCode);
-        using var after = await publicClient.GetAsync($"/api/v1/public/articles/{slug}");
+        using var after = await publicClient.GetAsync($"/api/v1/public/articles/{changedSlug}");
         Assert.Equal(HttpStatusCode.NotFound, after.StatusCode);
+        using var archivedRedirect = await publicClient.GetAsync($"/api/v1/public/seo-redirects?sourcePath=/kien-thuc/{slug}");
+        Assert.Equal(HttpStatusCode.NotFound, archivedRedirect.StatusCode);
     }
 
     [Fact]

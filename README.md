@@ -217,7 +217,7 @@ Integration tests yêu cầu PostgreSQL thật và biến `TEAPREMIUM_TEST_CONNE
 
 ## Giới hạn hiện tại
 
-- Chưa có redirect 301 để đổi slug Published; UI/API khóa đổi slug này.
+- Đổi slug Published của Product, Category và Article tạo redirect 301; Site Settings công khai được quản lý tại `/admin/settings`. Xem [SEO redirects](docs/seo-redirects.md) và [Site Settings](docs/site-settings.md). Cần áp dụng migration `AddSeoRedirectsAndSiteSettings` bằng bước migrate có review trước khi chạy API bản mới.
 - Chưa xác nhận R2, GA4/GSC account thật hoặc live chat hai chiều. GA4 chỉ tải sau consent và khi đã cấu hình Measurement ID thật.
 - Chưa có chính sách tự động lưu giữ/xóa lead; phải chốt trước Production.
 - Giá công khai, cart, order, checkout, payment và bảng commerce không thuộc MVP này.

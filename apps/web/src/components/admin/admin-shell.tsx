@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import { LayoutDashboard, Package, FolderTree, Tags, Images, Menu, X, BookOpen, Inbox } from "lucide-react";
+import { LayoutDashboard, Package, FolderTree, Tags, Images, Menu, X, BookOpen, Inbox, Settings2 } from "lucide-react";
 import { Toaster } from "sonner";
 import type { CurrentAdminUser } from "@/lib/auth/types";
 import { permissions, hasPermission } from "@/lib/permissions";
@@ -18,6 +18,7 @@ const links = [
   { href: "/admin/articles", label: "Bài viết", icon: BookOpen },
   { href: "/admin/article-categories", label: "Danh mục bài viết", icon: FolderTree },
   { href: "/admin/leads", label: "Leads", icon: Inbox },
+  { href: "/admin/settings", label: "Cài đặt website", icon: Settings2 },
 ];
 
 export function AdminShell({ user, children }: Readonly<{ user: CurrentAdminUser; children: ReactNode }>) {
@@ -27,12 +28,13 @@ export function AdminShell({ user, children }: Readonly<{ user: CurrentAdminUser
   const canRead = hasPermission(user.permissions, permissions.catalogRead);
   const canReadContent = hasPermission(user.permissions, permissions.contentRead);
   const canReadLeads = hasPermission(user.permissions, permissions.leadsRead);
+  const canManageSettings = hasPermission(user.permissions, permissions.settingsManage);
   return <div className="min-h-screen bg-[#f5f2eb] text-[#20362c] lg:flex">
     <Toaster position="top-right" richColors />
     {open && <button type="button" aria-label="Đóng menu" className="fixed inset-0 z-30 bg-black/45 lg:hidden" onClick={() => setOpen(false)} />}
     <aside className={`${open ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-[#183c31] text-[#f8f4eb] transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0`}>
       <div className="border-b border-white/10 px-6 py-7"><p className="font-serif text-2xl">TeaPremium</p><p className="mt-1 text-[11px] uppercase tracking-[0.28em] text-[#d8ab91]">Catalog Studio</p></div>
-      <nav aria-label="Quản trị" className="flex-1 space-y-1 px-3 py-5">{links.filter((link) => link.href === "/admin" || (link.href === "/admin/leads" ? canReadLeads : link.href.startsWith("/admin/article") ? canReadContent : canRead)).map(({ href, label, icon: Icon }) => {
+      <nav aria-label="Quản trị" className="flex-1 space-y-1 px-3 py-5">{links.filter((link) => link.href === "/admin" || (link.href === "/admin/settings" ? canManageSettings : link.href === "/admin/leads" ? canReadLeads : link.href.startsWith("/admin/article") ? canReadContent : canRead)).map(({ href, label, icon: Icon }) => {
         const active = pathname === href || (href !== "/admin" && pathname.startsWith(`${href}/`));
         return <Link key={href} href={href} onClick={() => setOpen(false)} aria-current={active ? "page" : undefined} className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition ${active ? "bg-white/15 text-white" : "text-[#c5d3c9] hover:bg-white/10 hover:text-white"}`}><Icon size={18} />{label}</Link>;
       })}</nav>

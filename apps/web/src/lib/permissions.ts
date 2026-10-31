@@ -8,6 +8,7 @@ export const permissions = {
   contentPublish: "Content.Publish",
   leadsRead: "Leads.Read",
   leadsManage: "Leads.Manage",
+  settingsManage: "Settings.Manage",
 } as const;
 
 export function hasPermission(

@@ -4,6 +4,8 @@ using TeaPremium.Domain.Catalog;
 using TeaPremium.Domain.Content;
 using TeaPremium.Domain.Leads;
 using TeaPremium.Domain.Media;
+using TeaPremium.Domain.Seo;
+using TeaPremium.Domain.Settings;
 using TeaPremium.Infrastructure.Identity;
 
 namespace TeaPremium.Infrastructure.Persistence;
@@ -31,6 +33,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<ArticleCategoryLink> ArticleCategoryLinks => Set<ArticleCategoryLink>();
     public DbSet<Lead> Leads => Set<Lead>();
     public DbSet<ContactEvent> ContactEvents => Set<ContactEvent>();
+    public DbSet<SeoRedirect> SeoRedirects => Set<SeoRedirect>();
+    public DbSet<SiteSettings> SiteSettings => Set<SiteSettings>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

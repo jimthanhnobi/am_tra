@@ -14,6 +14,8 @@ if (hotline && !/^\+?[\d\s().-]{6,25}$/.test(hotline)) throw new Error("SITE_HOT
 export const siteProfile = Object.freeze({
   about: process.env.SITE_ABOUT?.trim() || null,
   address: process.env.SITE_ADDRESS?.trim() || null,
+  openingHours: null as string | null,
+  email: null as string | null,
   hotline,
   phoneHref: hotline ? `tel:${hotline.replace(/[^+\d]/g, "")}` : null,
   zalo: socialUrl(process.env.SITE_ZALO_URL, ["zalo.me", "www.zalo.me"]),

@@ -1049,6 +1049,159 @@ namespace TeaPremium.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("TeaPremium.Domain.Seo.SeoRedirect", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("DestinationPath")
+                        .IsRequired()
+                        .HasMaxLength(220)
+                        .HasColumnType("character varying(220)")
+                        .HasColumnName("destination_path");
+
+                    b.Property<int>("RedirectType")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(301)
+                        .HasColumnName("redirect_type");
+
+                    b.Property<string>("SourcePath")
+                        .IsRequired()
+                        .HasMaxLength(220)
+                        .HasColumnType("character varying(220)")
+                        .HasColumnName("source_path");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.HasKey("Id")
+                        .HasName("pk_seo_redirects");
+
+                    b.HasIndex("DestinationPath")
+                        .HasDatabaseName("ix_seo_redirects_destination_path");
+
+                    b.HasIndex("SourcePath")
+                        .IsUnique()
+                        .HasDatabaseName("ux_seo_redirects_source_path");
+
+                    b.ToTable("seo_redirects", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_seo_redirects_distinct", "source_path <> destination_path");
+
+                            t.HasCheckConstraint("ck_seo_redirects_local_paths", "source_path ~ '^/(san-pham|danh-muc|kien-thuc)/[a-z0-9]+(-[a-z0-9]+)*$' AND destination_path ~ '^/(san-pham|danh-muc|kien-thuc)/[a-z0-9]+(-[a-z0-9]+)*$'");
+
+                            t.HasCheckConstraint("ck_seo_redirects_type", "redirect_type = 301");
+                        });
+                });
+
+            modelBuilder.Entity("TeaPremium.Domain.Settings.SiteSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("address");
+
+                    b.Property<string>("BrandTagline")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("brand_tagline");
+
+                    b.Property<string>("DefaultMetaDescription")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("default_meta_description");
+
+                    b.Property<Guid?>("DefaultOgImageAssetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("default_og_image_asset_id");
+
+                    b.Property<string>("DefaultSeoTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("default_seo_title");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
+                        .HasColumnName("email");
+
+                    b.Property<string>("FacebookUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("facebook_url");
+
+                    b.Property<Guid?>("FaviconAssetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("favicon_asset_id");
+
+                    b.Property<string>("Hotline")
+                        .HasMaxLength(25)
+                        .HasColumnType("character varying(25)")
+                        .HasColumnName("hotline");
+
+                    b.Property<Guid?>("LogoAssetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("logo_asset_id");
+
+                    b.Property<string>("OpeningHours")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("opening_hours");
+
+                    b.Property<string>("PublicWebsiteUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("public_website_url");
+
+                    b.Property<string>("SiteDescription")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("site_description");
+
+                    b.Property<string>("SiteName")
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)")
+                        .HasColumnName("site_name");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid>("UpdatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by_user_id");
+
+                    b.Property<string>("ZaloUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("zalo_url");
+
+                    b.HasKey("Id")
+                        .HasName("pk_site_settings");
+
+                    b.HasIndex("DefaultOgImageAssetId");
+
+                    b.HasIndex("FaviconAssetId");
+
+                    b.HasIndex("LogoAssetId");
+
+                    b.ToTable("site_settings", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_site_settings_singleton", "id = 1");
+                        });
+                });
+
             modelBuilder.Entity("TeaPremium.Infrastructure.Identity.ApplicationRole", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1560,6 +1713,24 @@ namespace TeaPremium.Infrastructure.Persistence.Migrations
                     b.Navigation("Asset");
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("TeaPremium.Domain.Settings.SiteSettings", b =>
+                {
+                    b.HasOne("TeaPremium.Domain.Media.MediaAsset", null)
+                        .WithMany()
+                        .HasForeignKey("DefaultOgImageAssetId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("TeaPremium.Domain.Media.MediaAsset", null)
+                        .WithMany()
+                        .HasForeignKey("FaviconAssetId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("TeaPremium.Domain.Media.MediaAsset", null)
+                        .WithMany()
+                        .HasForeignKey("LogoAssetId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("TeaPremium.Domain.Catalog.Brand", b =>

@@ -2,10 +2,12 @@ using System.Text.RegularExpressions;
 using System.Net;
 using TeaPremium.Domain.Catalog;
 using TeaPremium.Domain.Content;
+using TeaPremium.Domain.Seo;
+using TeaPremium.Application.Seo;
 
 namespace TeaPremium.Application.Content;
 
-public sealed partial class ArticleService(IArticleStore store, ArticleContentRenderer renderer, TimeProvider clock)
+public sealed partial class ArticleService(IArticleStore store, ISeoRedirectStore redirects, ArticleContentRenderer renderer, TimeProvider clock)
 {
     [GeneratedRegex("^[a-z0-9]+(?:-[a-z0-9]+)*$")]
     private static partial Regex SlugPattern();
@@ -35,13 +37,19 @@ public sealed partial class ArticleService(IArticleStore store, ArticleContentRe
     {
         Validate(input);
         if (await store.SlugExistsAsync(input.Slug, null, ct)) throw new ContentConflictException("Article slug already exists.");
+        if (await redirects.SourceExistsAsync(SeoRedirect.ContentPath("kien-thuc", input.Slug), ct))
+            throw new ContentConflictException("Article slug is reserved by a redirect.");
         await ValidateReferencesAsync(input, ct);
         var html = renderer.Render(input.ContentJson);
         var article = new Article(input.Slug, input.Title.Trim(), input.Excerpt.Trim(), input.ContentJson,
             html, authorId, input.CoverAssetId, input.Seo.ToMetadata());
         article.Update(input.Slug, input.Title.Trim(), input.Excerpt.Trim(), input.ContentJson,
             html, input.CoverAssetId, input.Seo.ToMetadata(), input.CategoryIds);
-        await store.SaveAsync(article, ct);
+        await store.ExecuteInTransactionAsync(async token =>
+        {
+            await redirects.EnsurePathAvailableAsync(SeoRedirect.ContentPath("kien-thuc", input.Slug), token);
+            await store.SaveAsync(article, token);
+        }, ct);
         return await store.DetailAsync(article, true, ct);
     }
 
@@ -49,13 +57,30 @@ public sealed partial class ArticleService(IArticleStore store, ArticleContentRe
     {
         Validate(input);
         var article = await store.FindAsync(id, ct) ?? throw new ContentNotFoundException("Article not found.");
-        if (article.Status == PublicationStatus.Published && article.Slug != input.Slug)
-            throw new ContentConflictException("Published slug cannot change without a 301 redirect.");
+        var previousSlug = article.Slug;
+        var slugChanged = previousSlug != input.Slug;
+        if (slugChanged && article.Status == PublicationStatus.Published &&
+            SeoRedirect.CanonicalPointsToSource(input.Seo.CanonicalOverride,
+                SeoRedirect.ContentPath("kien-thuc", previousSlug)))
+            throw new ContentValidationException("Clear the old canonical URL before changing a Published slug.");
         if (await store.SlugExistsAsync(input.Slug, id, ct)) throw new ContentConflictException("Article slug already exists.");
+        if (slugChanged && await redirects.SourceExistsAsync(SeoRedirect.ContentPath("kien-thuc", input.Slug), ct))
+            throw new ContentConflictException("Article slug is reserved by a redirect.");
         await ValidateReferencesAsync(input, ct);
-        article.Update(input.Slug, input.Title.Trim(), input.Excerpt.Trim(), input.ContentJson,
-            renderer.Render(input.ContentJson), input.CoverAssetId, input.Seo.ToMetadata(), input.CategoryIds);
-        await store.SaveAsync(article, ct);
+        var html = renderer.Render(input.ContentJson);
+        await store.ExecuteInTransactionAsync(async token =>
+        {
+            if (slugChanged && article.Status == PublicationStatus.Published)
+                await redirects.RecordSlugChangeAsync(
+                    SeoRedirect.ContentPath("kien-thuc", previousSlug),
+                    SeoRedirect.ContentPath("kien-thuc", input.Slug), token);
+            else if (slugChanged)
+                await redirects.EnsurePathAvailableAsync(
+                    SeoRedirect.ContentPath("kien-thuc", input.Slug), token);
+            article.Update(input.Slug, input.Title.Trim(), input.Excerpt.Trim(), input.ContentJson,
+                html, input.CoverAssetId, input.Seo.ToMetadata(), input.CategoryIds);
+            await store.SaveAsync(article, token);
+        }, ct);
         return await store.DetailAsync(article, true, ct);
     }
 

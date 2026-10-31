@@ -4,6 +4,7 @@ using Npgsql;
 using TeaPremium.Domain.Catalog;
 using TeaPremium.Domain.Common;
 using TeaPremium.Domain.Media;
+using TeaPremium.Domain.Seo;
 using TeaPremium.Infrastructure.Persistence;
 
 namespace TeaPremium.IntegrationTests;
@@ -47,6 +48,8 @@ public sealed class CatalogDatabaseTests(PostgreSqlFixture database)
             "product_categories",
             "product_media",
             "products",
+            "seo_redirects",
+            "site_settings",
         ];
 
         Assert.Equal(expectedTables, tables);
@@ -68,6 +71,24 @@ public sealed class CatalogDatabaseTests(PostgreSqlFixture database)
         Assert.Contains("ux_articles_slug", indexes);
         Assert.Contains("ux_article_categories_slug", indexes);
         Assert.Contains("ux_contact_events_client_event_id", indexes);
+        Assert.Contains("ux_seo_redirects_source_path", indexes);
+    }
+
+    [Fact]
+    public async Task RedirectSourcePathIsUniqueInPostgreSql()
+    {
+        await using var context = database.CreateContext();
+        var suffix = Guid.NewGuid().ToString("N");
+        var source = $"/san-pham/unique-old-{suffix}";
+        context.SeoRedirects.Add(new SeoRedirect(source,
+            $"/san-pham/unique-new-a-{suffix}", DateTimeOffset.UtcNow));
+        await context.SaveChangesAsync();
+        context.SeoRedirects.Add(new SeoRedirect(source,
+            $"/san-pham/unique-new-b-{suffix}", DateTimeOffset.UtcNow));
+        var error = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+        var postgres = Assert.IsType<PostgresException>(error.GetBaseException());
+        Assert.Equal(PostgresErrorCodes.UniqueViolation, postgres.SqlState);
+        Assert.Equal("ux_seo_redirects_source_path", postgres.ConstraintName);
     }
 
     [Fact]

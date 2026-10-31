@@ -34,6 +34,8 @@ Copy `apps/web/.env.example` sang `.env.local` cho local; Production đặt env 
 
 Index chỉ bật khi có tên cấu hình, origin HTTPS không phải localhost/example và `SITE_INDEXABLE=true`. Đây là chốt cấu hình, không tự xác minh quyền sở hữu thương hiệu/domain. Staging giữ `false`. Chưa cấu hình thì robots.txt disallow toàn site, metadata noindex và sitemap trống. Không tạo Organization/LocalBusiness/address/certification schema từ placeholders.
 
+Prompt 8 cho phép quản lý tên/domain/liên hệ/SEO defaults ở `/admin/settings`. Khi đã lưu settings, Public API của settings là nguồn cho storefront; env profile cũ là fallback trước lần lưu đầu. `SITE_INDEXABLE` vẫn là cổng deployment độc lập, mặc định false. `SITE_ABOUT` tiếp tục là nội dung giới thiệu từ env. Xem [site-settings.md](site-settings.md).
+
 Các biến `NEXT_PUBLIC_*` được Next inline tại build; phải **build lại** khi đổi chúng. Đổi profile server cần restart deployment; thay CDN cần build lại vì nó nằm trong next.config. Không deploy artifact của bài HTTP test: test cố ý dùng domain/nhãn fixture và ghi vào `.next`.
 
 ## Cache và trạng thái HTTP — Next.js 16.4.3
@@ -58,9 +60,9 @@ Detail lookups chạy tối đa 4 đồng thời; đây là chi phí N+1 có ch�
 
 ### Slug và redirect
 
-Backend hiện **chưa có redirect record/table/API**, và chặn đổi slug của entity Published bằng 409. Vì vậy không có record để resolve 301; slug lạ/cũ chưa biết trả 404. Không suy luận redirect bằng tên hay tìm gần đúng, không thêm backend workflow ngoài phạm vi tích hợp.
+Backend lưu redirect khi đổi slug Published cho Product, Category và Article. Next proxy resolve URL cũ qua Public API rồi trả HTTP 301 cùng origin; URL đích public trả 200, slug không tồn tại trả 404. Không suy luận redirect bằng tên hay tìm gần đúng. Chi tiết ở [seo-redirects.md](seo-redirects.md).
 
-Khi bổ sung redirect workflow, cần contract rõ cho source path → canonical destination, chặn loop/chain/open redirect, bảo đảm đích Published/indexable, và test HTTP **301** trước khi cho đổi slug Published. `permanentRedirect()` mặc định của Next là 308 nên không tự dùng nó để tuyên bố đạt yêu cầu 301.
+Backend chặn loop/chain/open redirect và không trả redirect nếu đích không còn public. `permanentRedirect()` của Next là 308, nên proxy dùng phản hồi 301 tường minh. Đích Published noindex vẫn public 200; sitemap vẫn loại noindex.
 
 ## Tests tự động
 
@@ -83,7 +85,7 @@ DTO projection không thể xác định giá hoặc thông tin riêng được 
 ## Kiểm tra thủ công trước khi index
 
 1. Với API/PostgreSQL/R2 thật của môi trường test, tạo category + product Draft trong Admin. Điền nội dung, SEO, ảnh đúng ALT; xác nhận public URL 404. Chuyển InReview → Publish; mở public URL 200, xem source có H1/mô tả, canonical/OG/robots và JSON-LD. Nhấp Zalo/Facebook/hotline đã cấu hình và kiểm tra đúng đích, không cần gửi tin.
-2. Archive product: URL 404 và không còn trong list/search/sitemap. Tắt robotsIndex trên product/category/article Published: URL 200 với robots noindex, vẫn có trong Public API/list phù hợp, nhưng không còn trong sitemap. Tải lại request mới thay vì chỉ kiểm tra tab/router cache cũ. Kiểm tra published slug PATCH bị 409 trong khi chưa có redirect workflow.
+2. Archive product: URL 404 và không còn trong list/search/sitemap. Tắt robotsIndex trên product/category/article Published: URL 200 với robots noindex, vẫn có trong Public API/list phù hợp, nhưng không còn trong sitemap. Tải lại request mới thay vì chỉ kiểm tra tab/router cache cũ. Đổi slug Published và xác nhận URL cũ 301 tới URL mới 200, canonical/sitemap dùng slug mới.
 3. Mở sitemap, kiểm tra mỗi URL bằng HTTP GET: 200, indexable và canonical tự trỏ; không có Admin/Preview/search/draft/noindex/query. Kiểm tra `/tim-kiem?q=...` noindex và trang 2 category có canonical/title riêng.
 4. Chrome DevTools → Lighthouse, chạy **Mobile**, Navigation trên production build ở home/category/product/contact, kiểm tra Performance, Accessibility, Best Practices, SEO. Chạy ít nhất 3 lần, ghi median và điều kiện mạng/API/ảnh; chưa có số đo thì không ghi điểm giả. Theo dõi LCP/CLS/INP, ảnh preload đúng một ảnh chính, không tải ảnh gốc khổng lồ.
 5. Kiểm tra viewport 375/768/1440px, không tràn ngang (trừ vùng gallery/table chủ động), tab bàn phím, skip link, label tìm kiếm, focus, ALT, gallery anchors và pagination khi tắt JavaScript. Xem source/network để tìm trường Admin/price/sentinel/token; kiểm tra link preview/admin không nằm trong sitemap.

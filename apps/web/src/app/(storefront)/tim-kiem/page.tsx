@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
 import { getPublicProducts } from "@/lib/api/public";
-import { siteConfig } from "@/lib/config/site";
+import { getSiteContext } from "@/lib/config/site-context";
 import { pageMetadata, parsePage } from "@/lib/seo/policy";
 import { contentWidth, EmptyCatalog, Pagination, ProductGrid } from "@/components/storefront/catalog";
 
-export function generateMetadata() { return pageMetadata(siteConfig, { path: "/tim-kiem", title: "Tìm kiếm trà cụ", description: "Tìm sản phẩm theo tên, mã sản phẩm hoặc đường dẫn.", index: false }); }
+export async function generateMetadata() { const { site } = await getSiteContext(); return pageMetadata(site, { path: "/tim-kiem", title: "Tìm kiếm trà cụ", description: "Tìm sản phẩm theo tên, mã sản phẩm hoặc đường dẫn.", index: false }); }
 
 export default async function SearchPage({ searchParams }: Readonly<{ searchParams: Promise<Record<string, string | string[] | undefined>> }>) {
   const query = await searchParams;

@@ -3,6 +3,7 @@ using TeaPremium.Application.Catalog;
 using TeaPremium.Application.Content;
 using TeaPremium.Application.Leads;
 using TeaPremium.Application.Media;
+using TeaPremium.Application.Settings;
 
 namespace TeaPremium.Api.ErrorHandling;
 
@@ -52,6 +53,10 @@ internal sealed class CatalogExceptionHandler : IExceptionHandler
                 statusCode: StatusCodes.Status503ServiceUnavailable,
                 title: "Media storage unavailable.",
                 detail: unavailable.Message),
+            SiteSettingsValidationException validation => Results.Problem(
+                statusCode: StatusCodes.Status422UnprocessableEntity,
+                title: "Site settings validation failed.",
+                detail: validation.Message),
             ObjectStorageException => Results.Problem(
                 statusCode: StatusCodes.Status502BadGateway,
                 title: "Media storage request failed.",

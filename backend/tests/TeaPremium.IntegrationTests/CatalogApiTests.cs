@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TeaPremium.Api.Contracts.Authentication;
 using TeaPremium.Application.Catalog;
 using TeaPremium.Application.Security;
+using TeaPremium.Application.Seo;
 using TeaPremium.Domain.Catalog;
 using TeaPremium.Domain.Media;
 using TeaPremium.Infrastructure.Identity;
@@ -363,6 +364,98 @@ public sealed class CatalogApiTests : IAsyncLifetime, IDisposable
         await using var verificationScope = _factory.Services.CreateAsyncScope();
         var dbContext = verificationScope.ServiceProvider.GetRequiredService<AppDbContext>();
         Assert.False(await dbContext.Brands.AnyAsync(item => item.Slug == slug));
+    }
+
+    [Fact]
+    public async Task PublishedCatalogSlugChangesCreateDirectRedirectsAndReserveOldPaths()
+    {
+        using var client = await CreateAuthenticatedClientAsync(_adminEmail);
+        var suffix = Guid.NewGuid().ToString("N");
+        var category = await CreateCategoryAsync(client, $"redirect-category-{suffix}");
+        category = await MoveCategoryAsync(client, category, "InReview");
+        category = await MoveCategoryAsync(client, category, "Published");
+        var firstCategorySlug = category.Slug;
+        var nextCategorySlug = $"next-category-{suffix}";
+        using (var renameCategory = await PatchJsonAsync(client, $"/api/v1/admin/categories/{category.Id}",
+            ToUpdate(category) with { Slug = nextCategorySlug }))
+        {
+            Assert.Equal(HttpStatusCode.OK, renameCategory.StatusCode);
+            category = Assert.IsType<AdminCategoryDetail>(await renameCategory.Content.ReadFromJsonAsync<AdminCategoryDetail>());
+        }
+        using (var redirect = await client.GetAsync($"/api/v1/public/seo-redirects?sourcePath=/danh-muc/{firstCategorySlug}"))
+        {
+            Assert.Equal(HttpStatusCode.OK, redirect.StatusCode);
+            Assert.Contains($"/danh-muc/{nextCategorySlug}", await redirect.Content.ReadAsStringAsync());
+        }
+        using (var detail = await client.GetAsync($"/api/v1/public/categories/{nextCategorySlug}"))
+            Assert.Equal(HttpStatusCode.OK, detail.StatusCode);
+        using (var duplicate = await PostJsonAsync(client, "/api/v1/admin/categories",
+            new CreateCategoryCommand(null, firstCategorySlug, "Reserved path", "<p>Test</p>", 0, ValidSeo(suffix))))
+            Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
+
+        var product = await CreateProductAsync(client, $"redirect-product-{suffix}", null, category.Id);
+        product = await MoveProductToInReviewAsync(client, product);
+        var assetId = await CreateMediaAssetAsync($"redirect-tests/{suffix}/cover.webp");
+        using (var attach = await PostJsonAsync(client, $"/api/v1/admin/products/{product.Id}/media",
+            new AttachProductMediaCommand(assetId, "Cover", 0, true)))
+            Assert.Equal(HttpStatusCode.Created, attach.StatusCode);
+        using (var publish = await SendWithCsrfAsync(client, HttpMethod.Post,
+            $"/api/v1/admin/products/{product.Id}/publish"))
+            Assert.Equal(HttpStatusCode.OK, publish.StatusCode);
+
+        var firstProductSlug = product.Slug;
+        var secondProductSlug = $"second-product-{suffix}";
+        var thirdProductSlug = $"third-product-{suffix}";
+        var update = new UpdateProductCommand(product.Sku, secondProductSlug, product.Name,
+            product.Summary, product.Description, product.DescriptionHtml, product.ProductType,
+            product.MaterialText, product.CapacityMl, product.Specifications,
+            product.PrimaryCategoryId, product.BrandId, product.Categories.Select(x => x.Id).ToArray(),
+            ToSeoInput(product.Seo));
+        using (var staleCanonical = await PatchJsonAsync(client, $"/api/v1/admin/products/{product.Id}",
+            update with { Seo = ToSeoInput(product.Seo) with
+                { CanonicalOverride = $"https://catalog.test/san-pham/{firstProductSlug}" } }))
+            Assert.Equal(HttpStatusCode.UnprocessableEntity, staleCanonical.StatusCode);
+        using (var rename = await PatchJsonAsync(client, $"/api/v1/admin/products/{product.Id}", update))
+            Assert.Equal(HttpStatusCode.OK, rename.StatusCode);
+        using (var renameAgain = await PatchJsonAsync(client, $"/api/v1/admin/products/{product.Id}",
+            update with { Slug = thirdProductSlug }))
+            Assert.Equal(HttpStatusCode.OK, renameAgain.StatusCode);
+        foreach (var oldSlug in new[] { firstProductSlug, secondProductSlug })
+        {
+            using var redirect = await client.GetAsync($"/api/v1/public/seo-redirects?sourcePath=/san-pham/{oldSlug}");
+            Assert.Equal(HttpStatusCode.OK, redirect.StatusCode);
+            Assert.Contains($"/san-pham/{thirdProductSlug}", await redirect.Content.ReadAsStringAsync());
+        }
+        using (var detail = await client.GetAsync($"/api/v1/public/products/{thirdProductSlug}"))
+            Assert.Equal(HttpStatusCode.OK, detail.StatusCode);
+        using (var loop = await PatchJsonAsync(client, $"/api/v1/admin/products/{product.Id}",
+            update with { Slug = firstProductSlug }))
+            Assert.Equal(HttpStatusCode.Conflict, loop.StatusCode);
+        using (var afterRejectedRename = await client.GetAsync($"/api/v1/public/products/{thirdProductSlug}"))
+            Assert.Equal(HttpStatusCode.OK, afterRejectedRename.StatusCode);
+    }
+
+    [Fact]
+    public async Task RedirectWriteRollsBackWithCatalogTransaction()
+    {
+        var suffix = Guid.NewGuid().ToString("N");
+        var source = $"/san-pham/rollback-old-{suffix}";
+        var target = $"/san-pham/rollback-new-{suffix}";
+        await using (var scope = _factory.Services.CreateAsyncScope())
+        {
+            var store = scope.ServiceProvider.GetRequiredService<ICatalogDataStore>();
+            var redirects = scope.ServiceProvider.GetRequiredService<ISeoRedirectStore>();
+            await Assert.ThrowsAsync<ExpectedRollbackException>(() => store.ExecuteInTransactionAsync(
+                async cancellationToken =>
+                {
+                    await redirects.RecordSlugChangeAsync(source, target, cancellationToken);
+                    await store.SaveChangesAsync(cancellationToken);
+                    throw new ExpectedRollbackException();
+                }, CancellationToken.None));
+        }
+        await using var checkScope = _factory.Services.CreateAsyncScope();
+        var db = checkScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        Assert.False(await db.SeoRedirects.AnyAsync(x => x.SourcePath == source));
     }
 
     [Fact]

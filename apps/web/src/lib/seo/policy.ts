@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { PublicProduct, PublicSeo } from "../api/public-types";
 
-export type SeoSite = Readonly<{ name: string; url: string; indexable: boolean }>;
+export type SeoSite = Readonly<{ name: string; url: string; indexable: boolean; defaultOgImageUrl?: string | null }>;
 export type Crumb = Readonly<{ name: string; path: string }>;
 
 export function plainText(html: string): string {
@@ -22,13 +22,13 @@ export function pageMetadata(site: SeoSite, input: Readonly<{
   const title = input.seo?.seoTitle || input.title;
   const description = input.seo?.metaDescription || input.description;
   const canonical = canonicalUrl(site, input.path, input.seo?.canonicalOverride);
-  const images = input.image ? [{ ...input.image }] : [];
+  const images = input.image ? [{ ...input.image }] : site.defaultOgImageUrl ? [site.defaultOgImageUrl] : [];
   return {
     title: { absolute: `${title} · ${site.name}` }, description,
     alternates: { canonical },
     robots: { index: site.indexable && input.index !== false && input.seo?.robotsIndex !== false, follow: true },
     openGraph: { type: "website", locale: "vi_VN", siteName: site.name, title: input.seo?.ogTitle || title, description: input.seo?.ogDescription || description, url: canonical, images },
-    twitter: { card: images.length ? "summary_large_image" : "summary", title: input.seo?.ogTitle || title, description: input.seo?.ogDescription || description, images: images.map((image) => image.url) },
+    twitter: { card: images.length ? "summary_large_image" : "summary", title: input.seo?.ogTitle || title, description: input.seo?.ogDescription || description, images: images.map((image) => typeof image === "string" ? image : image.url) },
   };
 }
 

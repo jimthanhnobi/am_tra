@@ -43,6 +43,7 @@ test("production storefront HTTP contract", { timeout: 180_000 }, async (t) => {
   let hiddenArticle = false;
   let empty = false;
   let failApi = false;
+  let settingsConfigured = false;
   const calls = [];
   const api = createServer((req, res) => {
     calls.push({ path: req.url, cookie: req.headers.cookie, authorization: req.headers.authorization });
@@ -52,6 +53,21 @@ test("production storefront HTTP contract", { timeout: 180_000 }, async (t) => {
     const pageData = { items: empty || hidden ? [] : [card, { ...card, slug: "noindex" }], page, pageSize, totalItems: empty || hidden ? 0 : 13, totalPages: empty || hidden ? 0 : Math.ceil(13 / pageSize) };
     let body;
     if (failApi) { res.writeHead(503).end(); return; }
+    if (url.pathname === "/api/v1/public/seo-redirects" &&
+        url.searchParams.get("sourcePath") === "/san-pham/old-product")
+      body = { destinationPath: "/san-pham/am-public", redirectType: 301 };
+    if (url.pathname === "/api/v1/public/seo-redirects" &&
+        url.searchParams.get("sourcePath") === "/kien-thuc/old-article")
+      body = { destinationPath: "/kien-thuc/bai-viet-test", redirectType: 301 };
+    if (url.pathname === "/api/v1/public/seo-redirects" &&
+        url.searchParams.get("sourcePath") === "/danh-muc/old-category")
+      body = { destinationPath: "/danh-muc/am-tra", redirectType: 301 };
+    if (url.pathname === "/api/v1/public/settings" && settingsConfigured)
+      body = { isConfigured: true, siteName: "Configured catalog", siteDescription: "Configured description",
+        brandTagline: "Configured tagline", logoUrl: null, faviconUrl: null, hotline: "0912345678",
+        zaloUrl: "https://zalo.me/0912345678", facebookUrl: null, email: null, address: null,
+        openingHours: null, defaultSeoTitle: "Configured SEO", defaultMetaDescription: "Configured meta",
+        defaultOgImageUrl: null, publicWebsiteUrl: "https://configured.catalog.test" };
     if (url.pathname === "/api/v1/public/categories") body = empty ? [] : [{ ...category, children: [] }, { slug: "noindex", name: "Danh mục noindex", children: [] }];
     if (url.pathname === "/api/v1/public/categories/am-tra") body = { ...category, descriptionHtml: "<p>Danh mục từ API</p>", seo: { ...seo, seoTitle: "Danh mục thử nghiệm" }, products: pageData };
     if (url.pathname === "/api/v1/public/categories/noindex") body = { slug: "noindex", name: "Danh mục noindex", descriptionHtml: "<p>Danh mục Published, không index.</p>", seo: { ...seo, robotsIndex: false }, products: pageData };
@@ -84,6 +100,18 @@ test("production storefront HTTP contract", { timeout: 180_000 }, async (t) => {
       await delay(100);
     }
     assert.ok(ready, server.output());
+    await t.test("old public slugs return a direct 301 to a 200 target", async () => {
+      for (const [oldPath, newPath] of [["/san-pham/old-product", "/san-pham/am-public"],
+        ["/kien-thuc/old-article", "/kien-thuc/bai-viet-test"],
+        ["/danh-muc/old-category", "/danh-muc/am-tra"]]) {
+        const redirect = await fetch(origin + oldPath, { redirect: "manual" });
+        assert.equal(redirect.status, 301);
+        assert.equal(new URL(redirect.headers.get("location"), origin).pathname, newPath);
+        const target = await fetch(origin + newPath);
+        assert.equal(target.status, 200);
+        assert.match(await target.text(), new RegExp(`rel="canonical" href="https://catalog.test${newPath}"`));
+      }
+    });
     async function get(path, status = 200) {
       const response = await fetch(origin + path, { redirect: "manual", headers: { Cookie: "session=PRIVATE_COOKIE", Authorization: "Bearer PRIVATE_AUTH" } });
       const html = await response.text();
@@ -195,6 +223,16 @@ test("production storefront HTTP contract", { timeout: 180_000 }, async (t) => {
       failApi = true;
       await get("/sitemap.xml", 500);
       failApi = false;
+    });
+    await t.test("public settings update server-rendered name, contact and canonical origin", async () => {
+      settingsConfigured = true;
+      const html = await get("/");
+      assert.match(html, /Configured catalog/);
+      assert.match(html, /Configured tagline/);
+      assert.match(html, /href="tel:0912345678"/);
+      assert.equal(html.match(/<link rel="canonical" href="([^"]+)"/)?.[1], "https://configured.catalog.test");
+      assert.match(await get("/robots.txt"), /configured\.catalog\.test\/sitemap\.xml/);
+      settingsConfigured = false;
     });
     assert.ok(calls.length > 0);
     const adminProbes = calls.filter((call) => call.path === "/api/v1/admin/auth/login");

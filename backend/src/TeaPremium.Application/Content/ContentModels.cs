@@ -33,6 +33,7 @@ public interface IArticleStore
     Task<bool> SlugExistsAsync(string slug, Guid? exceptId, CancellationToken cancellationToken);
     Task<bool> AssetsAndCategoriesExistAsync(Guid? coverId, Guid? ogImageId, IReadOnlyCollection<Guid> categoryIds, CancellationToken cancellationToken);
     Task SaveAsync(Article article, CancellationToken cancellationToken);
+    Task ExecuteInTransactionAsync(Func<CancellationToken, Task> operation, CancellationToken cancellationToken);
     Task<ArticleDetail> DetailAsync(Article article, bool includeDraft, CancellationToken cancellationToken);
     Task<ArticlePage<ArticleSummary>> ListAsync(bool publicOnly, int page, int pageSize, CancellationToken cancellationToken);
     Task<IReadOnlyList<ArticleCategoryDto>> CategoriesAsync(CancellationToken cancellationToken);

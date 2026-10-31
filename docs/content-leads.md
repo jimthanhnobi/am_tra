@@ -4,7 +4,7 @@
 
 - CMS có `articles`, `article_categories`, `article_category_links`; bài viết liên kết tác giả Identity và ảnh bìa trong `media_assets`.
 - Admin API: `GET/POST /api/v1/admin/articles`, `GET/PATCH /{id}`, `GET /{id}/preview`, `POST /{id}/review`, `/publish`, `/archive`; danh mục bài viết dùng `/api/v1/admin/article-categories` (GET/POST/PATCH).
-- Public API: `GET /api/v1/public/articles` và `/{slug}` chỉ trả bài `Published`. Bài Published có `robotsIndex=false` vẫn trả 200 với metadata noindex trên HTML, nhưng không vào sitemap. Draft, InReview và Archived trả 404 ở detail. Slug bài Published không đổi cho tới khi có redirect 301.
+- Public API: `GET /api/v1/public/articles` và `/{slug}` chỉ trả bài `Published`. Bài Published có `robotsIndex=false` vẫn trả 200 với metadata noindex trên HTML, nhưng không vào sitemap. Draft, InReview và Archived trả 404 ở detail. Đổi slug bài Published tạo redirect 301 theo [seo-redirects.md](seo-redirects.md).
 - Admin UI: `/admin/articles`, `/admin/articles/new`, `/admin/articles/[id]/edit`, `/admin/article-categories`; editor Tiptap lưu JSON. Backend chỉ tạo HTML từ JSON bằng whitelist node/mark và sanitizer. Không nhận HTML từ client làm nguồn nội dung.
 - Storefront `/kien-thuc` và `/kien-thuc/[slug]` render trên server, metadata/canonical/Article JSON-LD/breadcrumb/sitemap lấy từ Public API. JSON-LD không tự thêm tác giả vì Identity chỉ có email nội bộ, không có tên tác giả công khai đã xác nhận.
 - Lead: `leads` và `contact_events` là hai bảng riêng. Chỉ form liên hệ có consent mới tạo lead. Nhấn Zalo/Facebook/hotline, nếu khách đồng ý ghi nhận, tạo contact event; không tạo lead từ lượt nhấn.
@@ -59,4 +59,4 @@ Local development hiện dùng SDK pin `10.0.302` và Compose đầy đủ Postg
 
 ## Giới hạn còn lại
 
-Không có workflow redirect 301 để đổi slug Published. Chưa có màn gỡ lead/xuất dữ liệu hay chính sách retention tự động. Chưa có xác nhận gửi tin nhắn, tích hợp chat hai chiều, GA4/GSC account thực, hoặc điểm Lighthouse thực tế. Ảnh bài viết cần Media/R2 đã cấu hình thật; không có ảnh giả.
+Chưa có màn gỡ lead/xuất dữ liệu hay chính sách retention tự động. Chưa có xác nhận gửi tin nhắn, tích hợp chat hai chiều, GA4/GSC account thực, hoặc điểm Lighthouse thực tế. Ảnh bài viết cần Media/R2 đã cấu hình thật; không có ảnh giả.

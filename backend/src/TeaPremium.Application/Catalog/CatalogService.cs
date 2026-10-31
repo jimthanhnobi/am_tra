@@ -2,11 +2,14 @@ using Ganss.Xss;
 using TeaPremium.Domain.Catalog;
 using TeaPremium.Domain.Common;
 using TeaPremium.Domain.Media;
+using TeaPremium.Domain.Seo;
+using TeaPremium.Application.Seo;
 
 namespace TeaPremium.Application.Catalog;
 
 internal sealed class CatalogService(
     ICatalogDataStore store,
+    ISeoRedirectStore redirects,
     HtmlSanitizer htmlSanitizer,
     TimeProvider timeProvider) : ICatalogService
 {
@@ -42,6 +45,8 @@ internal sealed class CatalogService(
         ValidateProduct(normalized);
         await ValidateProductReferencesAsync(normalized, cancellationToken);
         await EnsureProductUniqueAsync(normalized.Slug, normalized.Sku, null, cancellationToken);
+        if (await redirects.SourceExistsAsync(SeoRedirect.ContentPath("san-pham", normalized.Slug), cancellationToken))
+            throw new CatalogConflictException("Product slug is reserved by a redirect.");
 
         var product = new Product(
             normalized.Slug,
@@ -66,6 +71,8 @@ internal sealed class CatalogService(
         await store.ExecuteInTransactionAsync(
             async token =>
             {
+                await redirects.EnsurePathAvailableAsync(
+                    SeoRedirect.ContentPath("san-pham", normalized.Slug), token);
                 store.AddProduct(product);
                 await store.SaveChangesAsync(token);
             },
@@ -91,12 +98,16 @@ internal sealed class CatalogService(
         var normalized = NormalizeProduct(command);
         ValidateProduct(normalized);
 
-        if (product.Status == PublicationStatus.Published &&
-            !string.Equals(product.Slug, normalized.Slug, StringComparison.Ordinal))
-        {
-            throw new CatalogConflictException(
-                "The slug of a Published product cannot be changed until the SEO redirect workflow is available.");
-        }
+        var previousSlug = product.Slug;
+        var slugChanged = !string.Equals(previousSlug, normalized.Slug, StringComparison.Ordinal);
+        if (slugChanged && product.Status == PublicationStatus.Published &&
+            SeoRedirect.CanonicalPointsToSource(normalized.Seo.CanonicalOverride,
+                SeoRedirect.ContentPath("san-pham", previousSlug)))
+            throw new CatalogValidationException(new Dictionary<string, string[]>
+            { ["seo.canonicalOverride"] = ["Clear the old canonical URL before changing a Published slug."] });
+        if (slugChanged && await redirects.SourceExistsAsync(
+                SeoRedirect.ContentPath("san-pham", normalized.Slug), cancellationToken))
+            throw new CatalogConflictException("Product slug is reserved by a redirect.");
 
         await ValidateProductReferencesAsync(normalized, cancellationToken);
         await EnsureProductUniqueAsync(normalized.Slug, normalized.Sku, id, cancellationToken);
@@ -115,6 +126,13 @@ internal sealed class CatalogService(
         await store.ExecuteInTransactionAsync(
             async token =>
             {
+                if (slugChanged && product.Status == PublicationStatus.Published)
+                    await redirects.RecordSlugChangeAsync(
+                        SeoRedirect.ContentPath("san-pham", previousSlug),
+                        SeoRedirect.ContentPath("san-pham", normalized.Slug), token);
+                else if (slugChanged)
+                    await redirects.EnsurePathAvailableAsync(
+                        SeoRedirect.ContentPath("san-pham", normalized.Slug), token);
                 product.Update(
                     normalized.Slug,
                     normalized.Name,
@@ -228,6 +246,8 @@ internal sealed class CatalogService(
         {
             throw new CatalogConflictException($"Category slug '{normalized.Slug}' is already in use.");
         }
+        if (await redirects.SourceExistsAsync(SeoRedirect.ContentPath("danh-muc", normalized.Slug), cancellationToken))
+            throw new CatalogConflictException("Category slug is reserved by a redirect.");
 
         var category = new Category(
             normalized.Slug,
@@ -240,6 +260,8 @@ internal sealed class CatalogService(
         await store.ExecuteInTransactionAsync(
             async token =>
             {
+                await redirects.EnsurePathAvailableAsync(
+                    SeoRedirect.ContentPath("danh-muc", normalized.Slug), token);
                 store.AddCategory(category);
                 await store.SaveChangesAsync(token);
             },
@@ -260,12 +282,16 @@ internal sealed class CatalogService(
         var normalized = NormalizeCategory(command);
         ValidateCategory(normalized);
 
-        if (category.Status == PublicationStatus.Published &&
-            !string.Equals(category.Slug, normalized.Slug, StringComparison.Ordinal))
-        {
-            throw new CatalogConflictException(
-                "The slug of a Published category cannot be changed until the SEO redirect workflow is available.");
-        }
+        var previousSlug = category.Slug;
+        var slugChanged = !string.Equals(previousSlug, normalized.Slug, StringComparison.Ordinal);
+        if (slugChanged && category.Status == PublicationStatus.Published &&
+            SeoRedirect.CanonicalPointsToSource(normalized.Seo.CanonicalOverride,
+                SeoRedirect.ContentPath("danh-muc", previousSlug)))
+            throw new CatalogValidationException(new Dictionary<string, string[]>
+            { ["seo.canonicalOverride"] = ["Clear the old canonical URL before changing a Published slug."] });
+        if (slugChanged && await redirects.SourceExistsAsync(
+                SeoRedirect.ContentPath("danh-muc", normalized.Slug), cancellationToken))
+            throw new CatalogConflictException("Category slug is reserved by a redirect.");
 
         await ValidateCategoryParentAsync(id, normalized.ParentId, cancellationToken);
         await ValidateSeoAssetAsync(normalized.Seo, cancellationToken);
@@ -296,6 +322,13 @@ internal sealed class CatalogService(
         await store.ExecuteInTransactionAsync(
             async token =>
             {
+                if (slugChanged && category.Status == PublicationStatus.Published)
+                    await redirects.RecordSlugChangeAsync(
+                        SeoRedirect.ContentPath("danh-muc", previousSlug),
+                        SeoRedirect.ContentPath("danh-muc", normalized.Slug), token);
+                else if (slugChanged)
+                    await redirects.EnsurePathAvailableAsync(
+                        SeoRedirect.ContentPath("danh-muc", normalized.Slug), token);
                 category.Update(
                     normalized.Slug,
                     normalized.Name,

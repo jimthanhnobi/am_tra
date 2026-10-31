@@ -211,10 +211,10 @@ Sơ đồ thể hiện quan hệ chính, không bao gồm toàn bộ cột quả
 | `article_category_links` | `article_id`, `category_id` | PK kép |
 | `leads` | `id`, `name?`, `phone?`, `email?`, `message`, `product_id?`, `source_page`, `channel`, `status`, `utm_jsonb`, `consent_at?`, `created_at` | `(created_at DESC)`, `(status,created_at)` |
 | `contact_events` | `id`, `event_type`, `channel`, `product_id?`, `page_path`, `occurred_at`, `consent_state` | `(occurred_at,channel)`, `UQ(id)` |
-| `seo_redirects` | `id`, `old_path`, `new_path`, `http_code`, `is_active` | `UQ(old_path)`; validate không loop |
+| `seo_redirects` | `id`, `source_path`, `destination_path`, `redirect_type=301`, `created_at_utc`, `updated_at_utc` | `UQ(source_path)`; validate local path, chống loop/chain |
 | `outbox_messages` | `id`, `event_type`, `aggregate_id`, `payload_jsonb`, `created_at`, `processed_at?`, `attempts` | `(processed_at,created_at)` |
 | `audit_logs` | `id`, `actor_user_id`, `action`, `entity`, `entity_id`, `created_at`, `changes_jsonb` | `(entity,entity_id,created_at)` |
-| `site_settings` | `key`, `value_jsonb`, `updated_at` | `PK(key)`, chỉ Admin quyền cao sửa |
+| `site_settings` | Singleton `id=1`, public profile/SEO fields, asset FK, `updated_by_user_id`, `updated_at_utc` | `Settings.Manage`; không lưu secret |
 
 `seo_*` ở các entity Published là một **SEO value object** được EF Core map thành cột: `seo_title`, `meta_description`, `canonical_override?`, `robots_index`, `og_title`, `og_description`, `og_image_asset_id?`. Cách này giữ FK và tính toàn vẹn của entity, tránh `seo_metadata(owner_type, owner_id)` không có foreign key chuẩn.
 

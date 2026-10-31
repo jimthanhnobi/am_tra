@@ -6,6 +6,7 @@ import { hasPermission, permissions } from "@/lib/permissions";
 import { AccessDenied } from "@/components/admin/access-denied";
 import type { AdminArticleDetail, ArticleCategory } from "@/lib/api/article-types";
 import { ArticleForm } from "../../article-form";
+import { getSiteContext } from "@/lib/config/site-context";
 
 export default async function EditArticlePage({ params }: Readonly<{ params: Promise<{ id: string }> }>) {
   const user = await getCurrentAdminUser();
@@ -15,6 +16,6 @@ export default async function EditArticlePage({ params }: Readonly<{ params: Pro
   let article: AdminArticleDetail;
   try { article = await getAdminApi<AdminArticleDetail>(`articles/${id}`); }
   catch (error) { if (error instanceof AdminApiError && error.status === 404) notFound(); throw error; }
-  const categories = await getAdminApi<ArticleCategory[]>("article-categories");
-  return <ArticleForm initial={article} categories={categories} canWrite={hasPermission(user!.permissions, permissions.contentWrite)} canPublish={hasPermission(user!.permissions, permissions.contentPublish)} />;
+  const [categories, { site }] = await Promise.all([getAdminApi<ArticleCategory[]>("article-categories"), getSiteContext()]);
+  return <ArticleForm initial={article} categories={categories} canonicalOrigin={site.url} canWrite={hasPermission(user!.permissions, permissions.contentWrite)} canPublish={hasPermission(user!.permissions, permissions.contentPublish)} />;
 }
