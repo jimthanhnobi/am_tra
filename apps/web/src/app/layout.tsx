@@ -24,9 +24,6 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   applicationName: siteConfig.name,
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     type: "website",
     locale: "vi_VN",
@@ -36,7 +33,7 @@ export const metadata: Metadata = {
     url: "/",
   },
   robots: {
-    index: true,
+    index: siteConfig.indexable,
     follow: true,
   },
 };

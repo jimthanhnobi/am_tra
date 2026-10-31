@@ -446,7 +446,7 @@ internal sealed class CatalogDataStore(
             product.ProductType,
             product.MaterialText,
             product.CapacityMl,
-            ParseJson(product.SpecsJson),
+            PublicSpecifications(product.SpecsJson),
             product.PublishedAt.Value,
             MapSeo(product.Seo),
             new PublicCategorySummary(
@@ -742,6 +742,42 @@ internal sealed class CatalogDataStore(
         }
 
         return result;
+    }
+
+    // Specifications are editor-provided JSON, so projecting the entity alone is
+    // insufficient to keep commerce and internal fields out of the public API.
+    private static JsonElement PublicSpecifications(string json)
+    {
+        string[] reserved = ["price", "cost", "inventory", "stock", "cart", "checkout", "payment", "order", "admin", "token", "secret", "password", "createdby", "updatedby"];
+        using var buffer = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(buffer))
+        {
+            Write(ParseJson(json), writer);
+        }
+        using var document = JsonDocument.Parse(buffer.ToArray());
+        return document.RootElement.Clone();
+
+        void Write(JsonElement value, Utf8JsonWriter writer)
+        {
+            if (value.ValueKind == JsonValueKind.Object)
+            {
+                writer.WriteStartObject();
+                foreach (var property in value.EnumerateObject())
+                {
+                    if (reserved.Any(key => property.Name.Contains(key, StringComparison.OrdinalIgnoreCase))) continue;
+                    writer.WritePropertyName(property.Name);
+                    Write(property.Value, writer);
+                }
+                writer.WriteEndObject();
+            }
+            else if (value.ValueKind == JsonValueKind.Array)
+            {
+                writer.WriteStartArray();
+                foreach (var item in value.EnumerateArray()) Write(item, writer);
+                writer.WriteEndArray();
+            }
+            else value.WriteTo(writer);
+        }
     }
 
     private static PublicCategoryNode[] BuildPublicTree(IReadOnlyList<CategoryRow> rows)

@@ -195,6 +195,23 @@ public sealed class CatalogApiTests : IAsyncLifetime, IDisposable
             $"/api/v1/admin/products/{product.Id}/publish");
         Assert.Equal(HttpStatusCode.OK, publishResponse.StatusCode);
 
+        var specifications = JsonSerializer.SerializeToElement(new
+        {
+            capacityMl = 180,
+            price = "PRIVATE_PRICE",
+            adminNotes = "PRIVATE_ADMIN",
+            details = new[] { new { color = "Clay", wholesalePrice = "PRIVATE_WHOLESALE" } },
+        });
+        using var specsUpdate = await PatchJsonAsync(client, $"/api/v1/admin/products/{product.Id}",
+            new UpdateProductCommand(product.Sku, product.Slug, product.Name, product.Summary,
+                product.Description, product.DescriptionHtml, product.ProductType, product.MaterialText,
+                product.CapacityMl, specifications, product.PrimaryCategoryId, product.BrandId,
+                product.Categories.Select(item => item.Id).ToArray(), ToSeoInput(product.Seo)));
+        Assert.Equal(HttpStatusCode.OK, specsUpdate.StatusCode);
+        var adminAfterUpdate = await specsUpdate.Content.ReadFromJsonAsync<AdminProductDetail>();
+        Assert.NotNull(adminAfterUpdate);
+        Assert.Equal("PRIVATE_PRICE", adminAfterUpdate.Specifications.GetProperty("price").GetString());
+
         using var publicDetailResponse = await client.GetAsync(
             $"/api/v1/public/products/{product.Slug}");
         Assert.Equal(HttpStatusCode.OK, publicDetailResponse.StatusCode);
@@ -202,6 +219,10 @@ public sealed class CatalogApiTests : IAsyncLifetime, IDisposable
             await publicDetailResponse.Content.ReadAsStringAsync());
         Assert.Equal(product.Slug, publicDocument.RootElement.GetProperty("slug").GetString());
         AssertNoCommerceProperties(publicDocument.RootElement);
+        var publicSpecs = publicDocument.RootElement.GetProperty("specifications");
+        Assert.Equal(180, publicSpecs.GetProperty("capacityMl").GetInt32());
+        Assert.Equal("Clay", publicSpecs.GetProperty("details")[0].GetProperty("color").GetString());
+        Assert.DoesNotContain("PRIVATE_", publicDocument.RootElement.GetRawText());
 
         using var publicListResponse = await client.GetAsync(
             $"/api/v1/public/products?category={category.Slug}&pageSize=48");
@@ -220,6 +241,16 @@ public sealed class CatalogApiTests : IAsyncLifetime, IDisposable
             category.Id);
         using var hiddenDraft = await client.GetAsync($"/api/v1/public/products/{draft.Slug}");
         Assert.Equal(HttpStatusCode.NotFound, hiddenDraft.StatusCode);
+
+        using var archive = await SendWithCsrfAsync(client, HttpMethod.Post,
+            $"/api/v1/admin/products/{product.Id}/archive");
+        Assert.Equal(HttpStatusCode.OK, archive.StatusCode);
+        using var hiddenArchived = await client.GetAsync($"/api/v1/public/products/{product.Slug}");
+        Assert.Equal(HttpStatusCode.NotFound, hiddenArchived.StatusCode);
+        var remaining = await client.GetFromJsonAsync<PagedResult<PublicProductListItem>>(
+            $"/api/v1/public/products?search={suffix}");
+        Assert.NotNull(remaining);
+        Assert.Empty(remaining.Items);
     }
 
     [Fact]
@@ -259,6 +290,56 @@ public sealed class CatalogApiTests : IAsyncLifetime, IDisposable
             HttpMethod.Post,
             $"/api/v1/admin/products/{product.Id}/publish");
         Assert.Equal(HttpStatusCode.Forbidden, forbiddenPublish.StatusCode);
+    }
+
+    [Fact]
+    public async Task PublishedNoindexCatalogRemainsPublicButReportsRobotsFlag()
+    {
+        using var client = await CreateAuthenticatedClientAsync(_adminEmail);
+        var suffix = Guid.NewGuid().ToString("N");
+        var category = await CreateCategoryAsync(client, $"indexable-{suffix}");
+        category = await MoveCategoryAsync(client, category, "InReview");
+        category = await MoveCategoryAsync(client, category, "Published");
+        var product = await CreateProductAsync(client, $"visibility-{suffix}", null, category.Id);
+        product = await MoveProductToInReviewAsync(client, product);
+        var assetId = await CreateMediaAssetAsync($"visibility/{suffix}.webp");
+        using var attached = await PostJsonAsync(client, $"/api/v1/admin/products/{product.Id}/media",
+            new AttachProductMediaCommand(assetId, "Ảnh sản phẩm", 0, true));
+        Assert.Equal(HttpStatusCode.Created, attached.StatusCode);
+        using var published = await SendWithCsrfAsync(client, HttpMethod.Post, $"/api/v1/admin/products/{product.Id}/publish");
+        Assert.Equal(HttpStatusCode.OK, published.StatusCode);
+
+        var update = new UpdateProductCommand(product.Sku, product.Slug, product.Name, product.Summary,
+            product.Description, product.DescriptionHtml, product.ProductType, product.MaterialText,
+            product.CapacityMl, product.Specifications, product.PrimaryCategoryId, product.BrandId,
+            product.Categories.Select(item => item.Id).ToArray(), ToSeoInput(product.Seo) with { RobotsIndex = false });
+        using var noindexUpdate = await PatchJsonAsync(client, $"/api/v1/admin/products/{product.Id}", update);
+        Assert.Equal(HttpStatusCode.OK, noindexUpdate.StatusCode);
+        using var noindexProduct = await client.GetAsync($"/api/v1/public/products/{product.Slug}");
+        Assert.Equal(HttpStatusCode.OK, noindexProduct.StatusCode);
+        using var productDocument = JsonDocument.Parse(await noindexProduct.Content.ReadAsStringAsync());
+        Assert.False(productDocument.RootElement.GetProperty("seo").GetProperty("robotsIndex").GetBoolean());
+        var results = await client.GetFromJsonAsync<PagedResult<PublicProductListItem>>($"/api/v1/public/products?search={suffix}");
+        Assert.NotNull(results);
+        Assert.Contains(results.Items, item => item.Slug == product.Slug);
+
+        using var visibleUpdate = await PatchJsonAsync(client, $"/api/v1/admin/products/{product.Id}",
+            update with { Seo = ToSeoInput(product.Seo) });
+        Assert.Equal(HttpStatusCode.OK, visibleUpdate.StatusCode);
+        using var noindexCategoryUpdate = await PatchJsonAsync(client, $"/api/v1/admin/categories/{category.Id}",
+            ToUpdate(category) with { Seo = ToSeoInput(category.Seo) with { RobotsIndex = false } });
+        Assert.Equal(HttpStatusCode.OK, noindexCategoryUpdate.StatusCode);
+        using var noindexCategory = await client.GetAsync($"/api/v1/public/categories/{category.Slug}");
+        Assert.Equal(HttpStatusCode.OK, noindexCategory.StatusCode);
+        using var categoryDocument = JsonDocument.Parse(await noindexCategory.Content.ReadAsStringAsync());
+        Assert.False(categoryDocument.RootElement.GetProperty("seo").GetProperty("robotsIndex").GetBoolean());
+        Assert.Contains(categoryDocument.RootElement.GetProperty("products").GetProperty("items").EnumerateArray(),
+            item => item.GetProperty("slug").GetString() == product.Slug);
+        using var productInNoindexCategory = await client.GetAsync($"/api/v1/public/products/{product.Slug}");
+        Assert.Equal(HttpStatusCode.OK, productInNoindexCategory.StatusCode);
+        var categories = await client.GetFromJsonAsync<PublicCategoryNode[]>("/api/v1/public/categories");
+        Assert.NotNull(categories);
+        Assert.Contains(categories, item => item.Slug == category.Slug);
     }
 
     [Fact]

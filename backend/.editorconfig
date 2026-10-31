@@ -1,0 +1,6 @@
+root = true
+
+# EF Core scaffolds migration operation arrays. Keep generated migrations intact;
+# CA1861's static-field suggestion is not appropriate for these generated files.
+[**/Persistence/Migrations/*.cs]
+dotnet_diagnostic.CA1861.severity = none

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using TeaPremium.Infrastructure.Persistence;
 
 namespace TeaPremium.IntegrationTests;
@@ -30,8 +31,19 @@ public sealed class PostgreSqlFixture : IAsyncLifetime
                 "development/test database. These tests intentionally do not use EF InMemory.");
         }
 
+        var settings = new NpgsqlConnectionStringBuilder(connectionString);
+        if (!IsDedicatedTestDatabase(settings.Database))
+        {
+            throw new InvalidOperationException(
+                "Integration tests require a dedicated database whose name starts with teapremium_test. " +
+                "Never point them at the Development or Production database.");
+        }
+
         return connectionString;
     }
+
+    internal static bool IsDedicatedTestDatabase(string? databaseName) =>
+        databaseName?.StartsWith("teapremium_test", StringComparison.OrdinalIgnoreCase) == true;
 
     public AppDbContext CreateContext() => new(_options);
 

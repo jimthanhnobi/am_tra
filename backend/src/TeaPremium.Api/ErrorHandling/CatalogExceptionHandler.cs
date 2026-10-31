@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using TeaPremium.Application.Catalog;
+using TeaPremium.Application.Content;
+using TeaPremium.Application.Leads;
 using TeaPremium.Application.Media;
 
 namespace TeaPremium.Api.ErrorHandling;
@@ -26,6 +28,26 @@ internal sealed class CatalogExceptionHandler : IExceptionHandler
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Catalog conflict.",
                 detail: conflict.Message),
+            ContentValidationException validation => Results.Problem(
+                statusCode: StatusCodes.Status422UnprocessableEntity,
+                title: "Content validation failed.",
+                detail: validation.Message),
+            ContentNotFoundException notFound => Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Content not found.",
+                detail: notFound.Message),
+            ContentConflictException conflict => Results.Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Content conflict.",
+                detail: conflict.Message),
+            LeadValidationException validation => Results.Problem(
+                statusCode: StatusCodes.Status422UnprocessableEntity,
+                title: "Lead validation failed.",
+                detail: validation.Message),
+            LeadNotFoundException notFound => Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Lead not found.",
+                detail: notFound.Message),
             MediaStorageUnavailableException unavailable => Results.Problem(
                 statusCode: StatusCodes.Status503ServiceUnavailable,
                 title: "Media storage unavailable.",

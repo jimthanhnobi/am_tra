@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function CatalogNotFound() { return <main id="noi-dung" className="mx-auto max-w-2xl px-6 py-24 text-center"><p className="text-sm text-[#8d4f34]">404</p><h1 className="mt-4 font-serif text-4xl">Không tìm thấy nội dung</h1><p className="mt-5 text-sm leading-7 text-[#66736c]">Đường dẫn này không tồn tại hoặc nội dung hiện chưa được công bố.</p><Link href="/" className="mt-7 inline-flex rounded-full bg-[#183c31] px-6 py-3 text-sm text-white">Về trang chủ</Link></main>; }

@@ -26,6 +26,11 @@ All routes below are prefixed with `/api/v1`. Admin routes use the existing ASP.
 | `GET` | `/admin/brands/{id}` | `Catalog.Read` | Brand detail |
 | `POST` | `/admin/brands` | `Catalog.Write` | Create a brand |
 | `PATCH` | `/admin/brands/{id}` | `Catalog.Write` | Replace brand fields |
+| `GET` | `/admin/catalog/summary` | `Catalog.Read` | Catalog counts for dashboard |
+| `GET` | `/admin/media` | `Catalog.Read` | Paged media library |
+| `POST` | `/admin/media/upload-intent` | `Media.Write` | Create R2 presigned PUT intent |
+| `POST` | `/admin/media/{uploadId}/complete` | `Media.Write` | Verify uploaded object and create MediaAsset |
+| `POST` | `/admin/media/uploads/cleanup` | `Media.Write` | Expire pending sessions and remove orphan objects |
 
 `PATCH` is an editor-oriented full update, not JSON Merge Patch. Send all editable fields from the current editor model. Omit `status` to keep the current status.
 
@@ -80,7 +85,7 @@ Product status follows `Draft -> InReview -> Published -> Archived`:
 
 Category status follows the same order through `PATCH`. Publishing requires content and SEO metadata; a parent must be Published first. Self-parenting, missing parents, and hierarchy cycles are rejected. A Published category used by a Published product cannot be archived. Published category slugs are immutable. Category and brand hard-delete endpoints intentionally do not exist.
 
-Media endpoints only connect existing `media_assets` rows. Uploading binaries and Cloudflare R2 integration are outside this slice. Cover replacement clears the previous cover and selects the new one inside a database transaction, preserving the PostgreSQL partial unique index. Detaching media never deletes the underlying asset.
+Product media endpoints connect existing `media_assets` rows. Binary upload uses a separate presigned R2 PUT flow described in [media-storage.md](media-storage.md). Cover replacement clears the previous cover and selects the new one inside a database transaction, preserving the PostgreSQL partial unique index. Detaching media never deletes the underlying asset.
 
 ## Public endpoints
 
@@ -94,6 +99,10 @@ Media endpoints only connect existing `media_assets` rows. Uploading binaries an
 Public product query parameters are `page`, `pageSize` (1–48), `search`, `category` (slug), and `sort` (`latest`, `name_asc`, `name_desc`). Queries are read-only and filtered in PostgreSQL before materialization. List projections fetch only the fields they need; detail queries use split includes to avoid Cartesian expansion.
 
 Draft, InReview, and Archived products/categories return `404` from detail routes and never appear in public lists. Public DTOs do not contain admin timestamps, workflow state, price, inventory, cart, order, checkout, or payment data. `storageKey` is an asset identifier, not a storage credential or signed upload secret.
+
+Public queries require `Published` status. Products require a Published primary category; secondary category links only expose Published categories. Counts and pagination apply these visibility filters in PostgreSQL. `seo.robotsIndex = false` does not hide a Published entity or its products from the Public API; storefront HTML returns 200 with noindex metadata and the URL is excluded from the sitemap. Admin data remains available.
+
+Public specifications recursively omit keys containing `price`, `cost`, `inventory`, `stock`, `cart`, `checkout`, `payment`, `order`, `admin`, `token`, `secret`, `password`, `createdby`, or `updatedby` (case insensitive), including nested objects/arrays. Admin specifications are unchanged. These reserved keys must not be used for public technical attributes. Editorial text still requires review: this projection does not detect a price typed into prose. Storefront additionally validates/strips unknown DTO fields and displays only scalar technical specifications.
 
 ## Errors and concurrency
 

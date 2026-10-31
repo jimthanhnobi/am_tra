@@ -592,6 +592,273 @@ namespace TeaPremium.Infrastructure.Persistence.Migrations
                     b.ToTable("product_categories", (string)null);
                 });
 
+            modelBuilder.Entity("TeaPremium.Domain.Content.Article", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<string>("ContentHtml")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("content_html");
+
+                    b.Property<string>("ContentJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("content_jsonb");
+
+                    b.Property<Guid?>("CoverAssetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cover_asset_id");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("Excerpt")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("excerpt");
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("slug");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Draft")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.HasKey("Id")
+                        .HasName("pk_articles");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("CoverAssetId");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("ux_articles_slug");
+
+                    b.HasIndex("Status", "PublishedAt")
+                        .HasDatabaseName("ix_articles_status_published_at");
+
+                    b.ToTable("articles", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_articles_content_jsonb_object", "jsonb_typeof(content_jsonb) = 'object'");
+
+                            t.HasCheckConstraint("ck_articles_status", "status IN ('Draft', 'InReview', 'Published', 'Archived')");
+                        });
+                });
+
+            modelBuilder.Entity("TeaPremium.Domain.Content.ArticleCategory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("slug");
+
+                    b.HasKey("Id")
+                        .HasName("pk_article_categories");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("ux_article_categories_slug");
+
+                    b.ToTable("article_categories", (string)null);
+                });
+
+            modelBuilder.Entity("TeaPremium.Domain.Content.ArticleCategoryLink", b =>
+                {
+                    b.Property<Guid>("ArticleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("article_id");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("category_id");
+
+                    b.HasKey("ArticleId", "CategoryId")
+                        .HasName("pk_article_category_links");
+
+                    b.HasIndex("CategoryId")
+                        .HasDatabaseName("ix_article_category_links_category_id");
+
+                    b.ToTable("article_category_links", (string)null);
+                });
+
+            modelBuilder.Entity("TeaPremium.Domain.Leads.ContactEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Channel")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("channel");
+
+                    b.Property<Guid>("ClientEventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("client_event_id");
+
+                    b.Property<bool>("ConsentState")
+                        .HasColumnType("boolean")
+                        .HasColumnName("consent_state");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("event_type");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.Property<string>("PagePath")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("page_path");
+
+                    b.Property<Guid?>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_contact_events");
+
+                    b.HasIndex("ClientEventId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_contact_events_client_event_id");
+
+                    b.HasIndex("OccurredAt")
+                        .HasDatabaseName("ix_contact_events_occurred_at");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("contact_events", (string)null);
+                });
+
+            modelBuilder.Entity("TeaPremium.Domain.Leads.Lead", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Channel")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("channel");
+
+                    b.Property<DateTimeOffset>("ConsentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("consent_at");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
+                        .HasColumnName("email");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("message");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("phone");
+
+                    b.Property<Guid?>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.Property<string>("SourcePage")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("source_page");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("New")
+                        .HasColumnName("status");
+
+                    b.Property<string>("UtmJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("utm_jsonb");
+
+                    b.HasKey("Id")
+                        .HasName("pk_leads");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("Status", "CreatedAtUtc")
+                        .HasDatabaseName("ix_leads_status_created_at");
+
+                    b.ToTable("leads", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_leads_status", "status IN ('New', 'Contacted', 'Closed')");
+
+                            t.HasCheckConstraint("ck_leads_utm_jsonb_object", "jsonb_typeof(utm_jsonb) = 'object'");
+                        });
+                });
+
             modelBuilder.Entity("TeaPremium.Domain.Media.MediaAsset", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1149,6 +1416,120 @@ namespace TeaPremium.Infrastructure.Persistence.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("TeaPremium.Domain.Content.Article", b =>
+                {
+                    b.HasOne("TeaPremium.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_articles_users_author_id");
+
+                    b.HasOne("TeaPremium.Domain.Media.MediaAsset", null)
+                        .WithMany()
+                        .HasForeignKey("CoverAssetId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_articles_media_assets_cover_asset_id");
+
+                    b.OwnsOne("TeaPremium.Domain.Common.SeoMetadata", "Seo", b1 =>
+                        {
+                            b1.Property<Guid>("ArticleId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("CanonicalOverride")
+                                .HasMaxLength(2048)
+                                .HasColumnType("character varying(2048)")
+                                .HasColumnName("canonical_override");
+
+                            b1.Property<string>("MetaDescription")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)")
+                                .HasColumnName("meta_description");
+
+                            b1.Property<string>("OgDescription")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)")
+                                .HasColumnName("og_description");
+
+                            b1.Property<Guid?>("OgImageAssetId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("og_image_asset_id");
+
+                            b1.Property<string>("OgTitle")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("og_title");
+
+                            b1.Property<bool>("RobotsIndex")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("boolean")
+                                .HasDefaultValue(true)
+                                .HasColumnName("robots_index");
+
+                            b1.Property<string>("SeoTitle")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("seo_title");
+
+                            b1.HasKey("ArticleId");
+
+                            b1.HasIndex("OgImageAssetId");
+
+                            b1.ToTable("articles");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ArticleId");
+
+                            b1.HasOne("TeaPremium.Domain.Media.MediaAsset", null)
+                                .WithMany()
+                                .HasForeignKey("OgImageAssetId")
+                                .OnDelete(DeleteBehavior.Restrict)
+                                .HasConstraintName("fk_articles_media_assets_og_image_asset_id");
+                        });
+
+                    b.Navigation("Seo")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TeaPremium.Domain.Content.ArticleCategoryLink", b =>
+                {
+                    b.HasOne("TeaPremium.Domain.Content.Article", "Article")
+                        .WithMany("Categories")
+                        .HasForeignKey("ArticleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_article_category_links_articles_article_id");
+
+                    b.HasOne("TeaPremium.Domain.Content.ArticleCategory", "Category")
+                        .WithMany("Articles")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_article_category_links_categories_category_id");
+
+                    b.Navigation("Article");
+
+                    b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("TeaPremium.Domain.Leads.ContactEvent", b =>
+                {
+                    b.HasOne("TeaPremium.Domain.Catalog.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_contact_events_products_product_id");
+                });
+
+            modelBuilder.Entity("TeaPremium.Domain.Leads.Lead", b =>
+                {
+                    b.HasOne("TeaPremium.Domain.Catalog.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_leads_products_product_id");
+                });
+
             modelBuilder.Entity("TeaPremium.Domain.Media.MediaUploadSession", b =>
                 {
                     b.HasOne("TeaPremium.Domain.Media.MediaAsset", "Asset")
@@ -1200,6 +1581,16 @@ namespace TeaPremium.Infrastructure.Persistence.Migrations
                     b.Navigation("Media");
 
                     b.Navigation("ProductCategories");
+                });
+
+            modelBuilder.Entity("TeaPremium.Domain.Content.Article", b =>
+                {
+                    b.Navigation("Categories");
+                });
+
+            modelBuilder.Entity("TeaPremium.Domain.Content.ArticleCategory", b =>
+                {
+                    b.Navigation("Articles");
                 });
 
             modelBuilder.Entity("TeaPremium.Domain.Media.MediaAsset", b =>

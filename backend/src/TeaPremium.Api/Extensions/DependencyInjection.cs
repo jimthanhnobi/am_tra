@@ -14,6 +14,9 @@ namespace TeaPremium.Api.Extensions;
 
 public static class DependencyInjection
 {
+    private static readonly string[] DevelopmentWebOrigins =
+        ["http://localhost:3000", "http://127.0.0.1:3000"];
+
     public static IServiceCollection AddApi(
         this IServiceCollection services,
         IConfiguration configuration,
@@ -47,6 +50,20 @@ public static class DependencyInjection
         {
             options.Conventions.Insert(0, new ApiVersionRouteConvention());
         });
+
+        var publicWebOrigin = configuration["PUBLIC_WEB_ORIGIN"]?.Trim();
+        if (!string.IsNullOrWhiteSpace(publicWebOrigin) &&
+            (!Uri.TryCreate(publicWebOrigin, UriKind.Absolute, out var origin) ||
+             origin.GetLeftPart(UriPartial.Authority) != publicWebOrigin ||
+             origin.UserInfo.Length > 0 || origin.Scheme is not ("http" or "https") ||
+             (!environment.IsDevelopment() && origin.Scheme != "https")))
+            throw new InvalidOperationException("PUBLIC_WEB_ORIGIN must be a website origin (HTTPS outside Development).");
+        var origins = environment.IsDevelopment()
+            ? DevelopmentWebOrigins
+                .Concat(string.IsNullOrWhiteSpace(publicWebOrigin) ? [] : [publicWebOrigin]).Distinct().ToArray()
+            : string.IsNullOrWhiteSpace(publicWebOrigin) ? [] : new[] { publicWebOrigin };
+        services.AddCors(options => options.AddPolicy("public-submit", policy =>
+            policy.WithOrigins(origins).WithMethods("POST").WithHeaders("content-type")));
 
         services.AddOpenApi("v1");
 
@@ -142,13 +159,34 @@ public static class DependencyInjection
                         QueueLimit = 0,
                         Window = TimeSpan.FromMinutes(1),
                     }));
+            options.AddPolicy("public-leads", context => RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    AutoReplenishment = true,
+                    PermitLimit = 5,
+                    QueueLimit = 0,
+                    Window = TimeSpan.FromMinutes(1),
+                }));
+            options.AddPolicy("public-contact-events", context => RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    AutoReplenishment = true,
+                    PermitLimit = 30,
+                    QueueLimit = 0,
+                    Window = TimeSpan.FromMinutes(1),
+                }));
         });
 
         services
             .AddHealthChecks()
             .AddCheck<SelfHealthCheck>(
                 "self",
-                tags: [HealthCheckTags.Live, HealthCheckTags.Ready]);
+                tags: [HealthCheckTags.Live, HealthCheckTags.Ready])
+            .AddCheck<PostgresHealthCheck>(
+                "postgres",
+                tags: [HealthCheckTags.Ready]);
 
         return services;
     }

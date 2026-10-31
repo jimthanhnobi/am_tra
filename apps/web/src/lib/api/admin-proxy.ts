@@ -67,7 +67,11 @@ export async function proxyAdminRequest(
 
 function hasSameOrigin(request: NextRequest): boolean {
   const origin = request.headers.get("origin");
-  return origin !== null && origin === request.nextUrl.origin;
+  // Standalone behind a host-port mapping can report its internal port in
+  // nextUrl.origin. Compare with the configured public origin instead.
+  const publicUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  const expectedOrigin = publicUrl ? new URL(publicUrl).origin : request.nextUrl.origin;
+  return origin !== null && origin === expectedOrigin;
 }
 
 async function createProxyResponse(method: string, upstream: Response): Promise<Response> {
@@ -86,6 +90,8 @@ async function createProxyResponse(method: string, upstream: Response): Promise<
   for (const cookie of headersWithCookies.getSetCookie?.() ?? []) {
     headers.append("set-cookie", cookie);
   }
+  headers.set("cache-control", "no-store");
+  headers.set("pragma", "no-cache");
 
   const hasNoBody =
     method === "HEAD" ||
@@ -103,13 +109,13 @@ function problemResponse(status: number, detail: string): Response {
   return Response.json(
     {
       type: "about:blank",
-      title: status === 403 ? "Forbidden" : "Bad Gateway",
+      title: status === 403 ? "Forbidden" : status === 400 ? "Bad Request" : "Bad Gateway",
       status,
       detail,
     },
     {
       status,
-      headers: { "cache-control": "no-store" },
+      headers: { "cache-control": "no-store", "content-type": "application/problem+json" },
     },
   );
 }

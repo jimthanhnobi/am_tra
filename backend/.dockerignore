@@ -1,0 +1,9 @@
+**/bin/
+**/obj/
+**/artifacts/
+tests/
+.env
+.env.*
+*.user
+*.suo
+*.log

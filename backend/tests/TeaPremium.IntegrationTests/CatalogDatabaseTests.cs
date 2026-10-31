@@ -12,7 +12,7 @@ namespace TeaPremium.IntegrationTests;
 public sealed class CatalogDatabaseTests(PostgreSqlFixture database)
 {
     [Fact]
-    public async Task InitialCatalogCreatesOnlyExpectedApplicationTablesAndIndexes()
+    public async Task CurrentSchemaCreatesExpectedApplicationTablesAndIndexes()
     {
         await using var context = database.CreateContext();
         var tables = await ReadStringsAsync(
@@ -28,8 +28,12 @@ public sealed class CatalogDatabaseTests(PostgreSqlFixture database)
 
         string[] expectedTables =
         [
+            "article_categories",
+            "article_category_links",
+            "articles",
             "brands",
             "categories",
+            "contact_events",
             "identity_role_claims",
             "identity_roles",
             "identity_user_claims",
@@ -37,6 +41,7 @@ public sealed class CatalogDatabaseTests(PostgreSqlFixture database)
             "identity_user_roles",
             "identity_user_tokens",
             "identity_users",
+            "leads",
             "media_assets",
             "media_upload_sessions",
             "product_categories",
@@ -60,6 +65,9 @@ public sealed class CatalogDatabaseTests(PostgreSqlFixture database)
         Assert.Contains("ux_product_media_one_cover_per_product", indexes);
         Assert.Contains("ix_product_media_product_id_sort_order", indexes);
         Assert.Contains("ix_categories_parent_id_sort_order", indexes);
+        Assert.Contains("ux_articles_slug", indexes);
+        Assert.Contains("ux_article_categories_slug", indexes);
+        Assert.Contains("ux_contact_events_client_event_id", indexes);
     }
 
     [Fact]

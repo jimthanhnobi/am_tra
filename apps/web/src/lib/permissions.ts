@@ -3,6 +3,11 @@ export const permissions = {
   catalogWrite: "Catalog.Write",
   catalogPublish: "Catalog.Publish",
   mediaWrite: "Media.Write",
+  contentRead: "Content.Read",
+  contentWrite: "Content.Write",
+  contentPublish: "Content.Publish",
+  leadsRead: "Leads.Read",
+  leadsManage: "Leads.Manage",
 } as const;
 
 export function hasPermission(

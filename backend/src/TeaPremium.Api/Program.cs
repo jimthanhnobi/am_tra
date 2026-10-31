@@ -1,6 +1,9 @@
 using System.Diagnostics;
+using System.Net;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using TeaPremium.Api.Configuration;
 using TeaPremium.Api.Extensions;
@@ -8,12 +11,28 @@ using TeaPremium.Api.HealthChecks;
 using TeaPremium.Api.Middleware;
 using TeaPremium.Application;
 using TeaPremium.Application.Authentication;
+using TeaPremium.Application.Content;
+using TeaPremium.Application.Security;
 using TeaPremium.Infrastructure;
+using TeaPremium.Infrastructure.Identity;
 
 Activity.DefaultIdFormat = ActivityIdFormat.W3C;
 Activity.ForceDefaultIdFormat = true;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var trustedProxyIp = builder.Configuration["TRUSTED_PROXY_IP"]?.Trim();
+if (!string.IsNullOrEmpty(trustedProxyIp))
+{
+    if (!IPAddress.TryParse(trustedProxyIp, out var proxyAddress))
+        throw new InvalidOperationException("TRUSTED_PROXY_IP must be a single IP address.");
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        options.ForwardLimit = 1;
+        options.KnownProxies.Add(proxyAddress);
+    });
+}
 
 builder.ConfigureStructuredLogging();
 
@@ -45,6 +64,35 @@ if (args.Any(argument => string.Equals(
     return;
 }
 
+if (args.Any(argument => string.Equals(argument, "seed-demo-article", StringComparison.OrdinalIgnoreCase)))
+{
+    if (!app.Environment.IsDevelopment())
+        throw new InvalidOperationException("seed-demo-article is restricted to Development.");
+
+    await using var scope = app.Services.CreateAsyncScope();
+    var store = scope.ServiceProvider.GetRequiredService<IArticleStore>();
+    const string demoSlug = "bai-viet-mau-cho-moi-truong-phat-trien";
+    if (!await store.SlugExistsAsync(demoSlug, null, CancellationToken.None))
+    {
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var admin = (await users.GetUsersInRoleAsync(AdminRoles.Admin)).FirstOrDefault()
+            ?? throw new InvalidOperationException("Bootstrap an Admin before seeding the demo article.");
+        var articles = scope.ServiceProvider.GetRequiredService<ArticleService>();
+        var created = await articles.CreateAsync(new ArticleInput(
+            demoSlug,
+            "Bài viết mẫu cho môi trường phát triển",
+            "Bài viết mẫu dùng để kiểm tra trình biên tập và trang kiến thức.",
+            """{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Đây là nội dung mẫu để kiểm tra CMS. Hãy thay bằng nội dung đã được xác minh trước khi triển khai thật."}]}]}""",
+            null, [], new ArticleSeoInput(
+                "Bài viết mẫu cho môi trường phát triển",
+                "Nội dung mẫu để kiểm tra CMS; không phải thông tin về hàng hóa hay xuất xứ.",
+                null, true, null, null, null)), admin.Id, CancellationToken.None);
+        await articles.TransitionAsync(created.Id, "review", CancellationToken.None);
+        await articles.TransitionAsync(created.Id, "publish", CancellationToken.None);
+    }
+    return;
+}
+
 var apiMetadata = app.Services.GetRequiredService<IOptions<ApiMetadataOptions>>().Value;
 
 ApiLog.StartingApi(
@@ -52,7 +100,10 @@ ApiLog.StartingApi(
     apiMetadata.Name,
     apiMetadata.Version);
 
+if (!string.IsNullOrEmpty(trustedProxyIp)) app.UseForwardedHeaders();
+
 app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<AdminNoStoreMiddleware>();
 app.UseExceptionHandler();
 app.UseMiddleware<RequestLoggingMiddleware>();
 
@@ -75,10 +126,13 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseHsts();
-    app.UseHttpsRedirection();
+    // With a trusted TLS proxy, the API also receives private HTTP calls from
+    // the Next BFF. The proxy owns the public HTTP-to-HTTPS redirect.
+    if (string.IsNullOrEmpty(trustedProxyIp)) app.UseHttpsRedirection();
 }
 
 app.UseRouting();
+app.UseCors();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();

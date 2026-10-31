@@ -6,8 +6,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TeaPremium.Application.Authentication;
 using TeaPremium.Application.Catalog;
+using TeaPremium.Application.Content;
+using TeaPremium.Application.Leads;
 using TeaPremium.Application.Media;
 using TeaPremium.Infrastructure.Catalog;
+using TeaPremium.Infrastructure.Content;
+using TeaPremium.Infrastructure.Leads;
 using TeaPremium.Infrastructure.Identity;
 using TeaPremium.Infrastructure.Media;
 using TeaPremium.Infrastructure.Persistence;
@@ -62,6 +66,8 @@ public static class DependencyInjection
         services.AddScoped<IAdminBootstrapper, DevelopmentAdminBootstrapper>();
         services.AddScoped<IAdminCatalogSummaryQuery, AdminCatalogSummaryQuery>();
         services.AddScoped<ICatalogDataStore, CatalogDataStore>();
+        services.AddScoped<IArticleStore, ArticleStore>();
+        services.AddScoped<ILeadStore, LeadStore>();
         services.AddScoped<IMediaDataStore, MediaDataStore>();
 
         ConfigureObjectStorage(services, configuration);

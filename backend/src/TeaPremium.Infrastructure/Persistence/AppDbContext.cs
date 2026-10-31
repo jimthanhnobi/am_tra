@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TeaPremium.Domain.Catalog;
+using TeaPremium.Domain.Content;
+using TeaPremium.Domain.Leads;
 using TeaPremium.Domain.Media;
 using TeaPremium.Infrastructure.Identity;
 
@@ -24,6 +26,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<ProductMedia> ProductMedia => Set<ProductMedia>();
 
     public DbSet<MediaUploadSession> MediaUploadSessions => Set<MediaUploadSession>();
+    public DbSet<Article> Articles => Set<Article>();
+    public DbSet<ArticleCategory> ArticleCategories => Set<ArticleCategory>();
+    public DbSet<ArticleCategoryLink> ArticleCategoryLinks => Set<ArticleCategoryLink>();
+    public DbSet<Lead> Leads => Set<Lead>();
+    public DbSet<ContactEvent> ContactEvents => Set<ContactEvent>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

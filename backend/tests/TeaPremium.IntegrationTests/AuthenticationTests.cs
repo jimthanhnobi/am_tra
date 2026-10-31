@@ -49,6 +49,7 @@ public sealed class AuthenticationTests : IAsyncLifetime, IDisposable
         using var response = await client.GetAsync("/api/v1/admin/auth/me");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Contains("no-store", response.Headers.CacheControl?.ToString());
         Assert.Equal(
             "application/problem+json",
             response.Content.Headers.ContentType?.MediaType);
@@ -78,6 +79,7 @@ public sealed class AuthenticationTests : IAsyncLifetime, IDisposable
         using var response = await client.GetAsync("/api/v1/admin/catalog/summary");
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Contains("no-store", response.Headers.CacheControl?.ToString());
         Assert.Equal(
             "application/problem+json",
             response.Content.Headers.ContentType?.MediaType);
@@ -89,6 +91,7 @@ public sealed class AuthenticationTests : IAsyncLifetime, IDisposable
         using var client = CreateClient();
 
         using var loginResponse = await LoginAsync(client, _adminEmail);
+        Assert.Contains("no-store", loginResponse.Headers.CacheControl?.ToString());
         var setCookie = Assert.Single(
             loginResponse.Headers.GetValues("Set-Cookie"),
             value => value.StartsWith("TeaPremium.Admin=", StringComparison.Ordinal));
@@ -113,6 +116,7 @@ public sealed class AuthenticationTests : IAsyncLifetime, IDisposable
 
         using var catalogResponse = await client.GetAsync("/api/v1/admin/catalog/summary");
         Assert.Equal(HttpStatusCode.OK, catalogResponse.StatusCode);
+        Assert.Contains("no-store", catalogResponse.Headers.CacheControl?.ToString());
 
         var csrf = await GetAntiforgeryTokenAsync(client);
         using var logoutRequest = new HttpRequestMessage(

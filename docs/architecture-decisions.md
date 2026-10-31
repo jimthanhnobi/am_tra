@@ -77,5 +77,11 @@ Các module nghiệp vụ dự kiến: Catalog, Content, SEO, Leads, Identity v�
 
 ## Nguyên tắc thay đổi quyết định
 
+### AD-16 — Storefront SSR và index opt-in
+
+Storefront hiện dùng blocking SSR, fetch Public API `no-store`, sitemap/robots dynamic trên Next.js 16.4.3. Tắt Cache Components/PPR; chờ metadata để giữ HTTP 404 đúng cho missing/unpublished thay vì stream 200 trước khi biết visibility. Protected Admin giữ dynamic, authentication và CSRF hiện có. Không thay schema, không cần migration.
+
+Lựa chọn này ưu tiên visibility đúng sau publish/archive với request mới; chấp nhận TTFB và tải API cao hơn ISR. Sitemap đọc detail có giới hạn đồng thời để lọc canonical/indexability khi list DTO chưa có SEO flags. Chỉ bật index khi cấu hình origin HTTPS/thương hiệu thật và `SITE_INDEXABLE=true`. Chuyển sang ISR sau này cần invalidation và regression tests visibility. Chi tiết và các giới hạn redirect/profile nằm trong [storefront-seo.md](storefront-seo.md).
+
 Thay đổi phạm vi, stack, public URL, boundary dependency, auth/session hoặc chính sách index phải được ghi bằng ADR mới: nêu vấn đề, lựa chọn, quyết định, hệ quả và kế hoạch migration. Không mở rộng sang commerce chỉ để “chuẩn bị trước”; giữ stable ID, slug, publish lifecycle và contract rõ là đủ để mở rộng sau.
 

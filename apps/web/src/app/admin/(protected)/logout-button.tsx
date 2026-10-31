@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { getAntiforgeryToken } from "@/lib/auth/client";
 
 export function LogoutButton() {
@@ -25,6 +26,8 @@ export function LogoutButton() {
 
       router.replace("/admin/login");
       router.refresh();
+    } catch {
+      toast.error("Không thể đăng xuất. Vui lòng thử lại.");
     } finally {
       setPending(false);
     }

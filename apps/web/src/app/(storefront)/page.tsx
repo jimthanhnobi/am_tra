@@ -1,104 +1,17 @@
-import type { Metadata } from "next";
-import { createPageMetadata } from "@/lib/seo/metadata";
+import Link from "next/link";
+import { siteConfig } from "@/lib/config/site";
+import { getPublicCategories, getPublicProducts } from "@/lib/api/public";
+import { pageMetadata } from "@/lib/seo/policy";
+import { CatalogImage, contentWidth, ProductGrid } from "@/components/storefront/catalog";
+import { ContactLinks } from "@/components/storefront/contact";
 
-export const metadata: Metadata = createPageMetadata({ path: "/" });
+export function generateMetadata() { return pageMetadata(siteConfig, { path: "/", title: "Trà cụ & những khoảng lặng", description: siteConfig.description }); }
 
-const foundations = [
-  {
-    index: "01",
-    title: "Danh mục có ngữ cảnh",
-    description: "Sản phẩm sẽ chỉ xuất hiện khi nội dung, hình ảnh và trạng thái xuất bản đã được kiểm duyệt.",
-  },
-  {
-    index: "02",
-    title: "Kiến thức để lựa chọn",
-    description: "Không gian nội dung được chuẩn bị để kết nối câu chuyện chất liệu, cách dùng và bảo quản trà cụ.",
-  },
-  {
-    index: "03",
-    title: "Liên hệ đúng lúc",
-    description: "Kênh tư vấn sẽ lấy từ cấu hình shop đã xác nhận, không dùng địa chỉ hay thông tin liên hệ giả.",
-  },
-] as const;
-
-export default function HomePage() {
-  return (
-    <main>
-      <section className="relative isolate border-b border-[#d8d1c3]">
-        <div className="tea-grid absolute inset-0 -z-20" aria-hidden="true" />
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_72%_36%,rgba(141,79,52,0.16),transparent_32%),linear-gradient(120deg,rgba(243,239,230,0.78),rgba(243,239,230,0.98))]" aria-hidden="true" />
-
-        <div className="mx-auto grid min-h-[700px] max-w-7xl items-center gap-12 px-6 py-20 lg:grid-cols-[1.15fr_0.85fr] lg:px-10 lg:py-28">
-          <div>
-            <p className="mb-7 text-xs font-semibold uppercase tracking-[0.3em] text-[#8d4f34]">
-              TeaPremium · Nền tảng đang xây dựng
-            </p>
-            <h1 className="max-w-3xl font-serif text-5xl leading-[1.08] font-medium tracking-[-0.035em] text-[#183c31] sm:text-6xl lg:text-7xl">
-              Không gian trà cụ được chuẩn bị cho những lựa chọn có chiều sâu.
-            </h1>
-            <p className="mt-8 max-w-2xl text-base leading-8 text-[#536159] sm:text-lg">
-              Foundation kết nối catalog, nội dung kiến thức và hành trình tư vấn trong một trải nghiệm tiếng Việt tinh gọn — không giá công khai, không giỏ hàng, không đặt mua trực tuyến.
-            </p>
-            <div className="mt-10 flex flex-wrap items-center gap-4">
-              <a className="rounded-full bg-[#183c31] px-6 py-3 text-sm font-medium text-[#fbf8f1] transition hover:bg-[#245244] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#183c31]" href="#dinh-huong">
-                Xem định hướng
-              </a>
-              <span className="rounded-full border border-[#c9c0b1] bg-[#fbf8f1]/70 px-5 py-3 text-sm text-[#536159]">
-                Foundation · Local-ready
-              </span>
-            </div>
-          </div>
-
-          <div className="relative mx-auto grid aspect-square w-full max-w-[480px] place-items-center" aria-hidden="true">
-            <div className="absolute inset-[8%] rounded-full border border-[#183c31]/20" />
-            <div className="absolute inset-[20%] rounded-full border border-[#8d4f34]/25" />
-            <svg className="h-[58%] w-[58%] text-[#183c31]" viewBox="0 0 320 320" fill="none" role="presentation">
-              <path d="M84 143c5 73 31 108 76 108s71-35 76-108H84Z" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeWidth="3" />
-              <path d="M111 142c0-25 19-45 49-45s49 20 49 45" stroke="currentColor" strokeWidth="3" />
-              <path d="M145 95V77h30v18" stroke="currentColor" strokeWidth="3" />
-              <path d="M236 151c31-4 43 9 37 28-5 18-21 27-42 24" stroke="currentColor" strokeWidth="3" />
-              <path d="M84 153c-26 3-38-4-43-17 19-4 33-1 45 8" stroke="currentColor" strokeWidth="3" />
-              <path d="M116 267h88" stroke="currentColor" strokeLinecap="round" strokeWidth="3" />
-            </svg>
-            <span className="absolute right-[6%] bottom-[18%] font-serif text-sm italic text-[#8d4f34]">tĩnh · chuẩn · thật</span>
-          </div>
-        </div>
-      </section>
-
-      <section id="dinh-huong" className="bg-[#fbf8f1] px-6 py-24 lg:px-10">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-8 border-b border-[#d8d1c3] pb-12 lg:grid-cols-[0.75fr_1.25fr]">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#8d4f34]">Định hướng trải nghiệm</p>
-            <h2 className="max-w-4xl font-serif text-3xl leading-tight font-medium text-[#183c31] sm:text-5xl">
-              Nội dung đáng tin trước, kỹ thuật làm nền, tư vấn là bước tiếp theo.
-            </h2>
-          </div>
-
-          <div className="grid gap-px overflow-hidden border-x border-b border-[#d8d1c3] bg-[#d8d1c3] md:grid-cols-3">
-            {foundations.map((foundation) => (
-              <article className="bg-[#fbf8f1] p-8 sm:p-10" key={foundation.index}>
-                <span className="text-xs tracking-[0.24em] text-[#8d4f34]">{foundation.index}</span>
-                <h3 className="mt-12 font-serif text-2xl font-medium text-[#183c31]">{foundation.title}</h3>
-                <p className="mt-5 text-sm leading-7 text-[#66736c]">{foundation.description}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="foundation" className="bg-[#183c31] px-6 py-20 text-[#f3efe6] lg:px-10">
-        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1fr_1.25fr] lg:items-end">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#d8ab91]">Foundation status</p>
-            <h2 className="mt-5 font-serif text-4xl font-medium">Khung kỹ thuật đã sẵn sàng để phát triển theo milestone.</h2>
-          </div>
-          <div className="grid gap-4 text-sm leading-7 text-[#cbd5cf] sm:grid-cols-2">
-            <p>Storefront và Admin được tách theo route, metadata lấy từ cấu hình môi trường, giao diện render phía server.</p>
-            <p>Catalog, CMS, authentication và dữ liệu shop chưa được giả lập; chúng sẽ được triển khai ở các milestone kế tiếp.</p>
-          </div>
-        </div>
-      </section>
-    </main>
-  );
+export default async function HomePage() {
+  const [categories, products] = await Promise.all([getPublicCategories(), getPublicProducts(1, 6)]);
+  const cover = products.items.find((product) => product.coverImage?.publicUrl)?.coverImage;
+  return <main id="noi-dung"><section className="border-b border-[#d8d1c3] bg-[#eae4d7]"><div className={`${contentWidth} grid items-center gap-10 py-16 md:grid-cols-2 md:py-24`}><div><p className="text-xs uppercase tracking-[0.3em] text-[#8d4f34]">Trà cụ · {siteConfig.name}</p><h1 className="mt-6 max-w-xl font-serif text-5xl leading-[1.12] text-[#183c31] lg:text-6xl">Một khoảng lặng,<br />một chén trà.</h1><p className="mt-7 max-w-lg text-base leading-8 text-[#536159]">Khám phá trà cụ qua hình dáng, chất liệu và câu chuyện được chia sẻ cùng mỗi sản phẩm.</p><a href="#bo-suu-tap" className="mt-8 inline-flex rounded-full bg-[#183c31] px-6 py-3 text-sm text-[#fbf8f1]">Khám phá bộ sưu tập ↓</a></div><div className="aspect-square max-h-[440px] overflow-hidden rounded-t-full border border-[#c9c0b1] bg-[#f5f0e6] p-8">{cover ? <CatalogImage image={cover} priority sizes="(max-width: 768px) 90vw, 440px" /> : <div className="flex h-full flex-col items-center justify-center text-center"><span aria-hidden="true" className="font-serif text-7xl text-[#8d4f34]/60">茶</span><p className="mt-8 font-serif text-2xl leading-relaxed text-[#536159]">Chậm một chút.<br />Để thưởng trà.</p></div>}</div></div></section>
+    <section id="bo-suu-tap" className={`${contentWidth} py-16 sm:py-20`}><div className="mb-10 flex flex-wrap items-end justify-between gap-5"><div><p className="text-xs uppercase tracking-[0.24em] text-[#8d4f34]">Bộ sưu tập</p><h2 className="mt-3 font-serif text-3xl sm:text-4xl">Khám phá trà cụ</h2></div>{categories.length > 0 && <nav aria-label="Danh mục trà cụ" className="flex flex-wrap gap-2">{categories.map((category) => <Link key={category.slug} href={`/danh-muc/${category.slug}`} className="rounded-full border border-[#c9c0b1] px-4 py-2 text-sm hover:bg-[#eae4d7]">{category.name} ↗</Link>)}</nav>}</div><ProductGrid products={products.items} />{products.totalItems > 6 && <Link className="mt-10 inline-block border-b border-[#8d4f34] pb-1 text-sm text-[#8d4f34]" href="/tim-kiem">Xem tất cả sản phẩm →</Link>}</section>
+    <section className="border-y border-[#d8d1c3] bg-[#fbf8f1]"><div className={`${contentWidth} grid gap-8 py-14 md:grid-cols-2`}><div><p className="text-xs uppercase tracking-[0.24em] text-[#8d4f34]">Kết nối</p><h2 className="mt-3 font-serif text-3xl">Tìm trà cụ phù hợp với bạn</h2></div><div><p className="mb-6 text-sm leading-7 text-[#66736c]">Trao đổi về sản phẩm bạn quan tâm qua kênh liên hệ được công bố.</p><ContactLinks /></div></div></section>
+  </main>;
 }
-

@@ -31,7 +31,7 @@
 ## SEO và publishing
 
 - Các trang public Published phải có HTML nội dung chính và metadata được render/prerender phía server; không phụ thuộc client fetch để index.
-- Chỉ `Published` và indexable xuất hiện trong API public/sitemap. Draft, Archived, Admin, Preview và tìm kiếm nội bộ không được index.
+- API public chỉ trả entity `Published`; `robotsIndex=false` vẫn có thể xem công khai với HTTP 200 và metadata noindex. Sitemap chỉ đưa URL Published, indexable, canonical 200. Draft, Archived, Admin, Preview và tìm kiếm nội bộ không được index.
 - Mỗi trang indexable có title, description, canonical, H1 hợp lý và metadata social; slug Published đổi phải có redirect 301.
 - JSON-LD phải phản ánh dữ liệu thật. Không tạo `Offer`, giá `0`, availability, rating/review hoặc thông tin shop giả.
 - Giữ `/tim-kiem` noindex; filter/sort không tự sinh landing page indexable. Ảnh cần dimensions và ALT đúng thực tế.
@@ -47,6 +47,8 @@ dotnet test backend/TeaPremium.sln --configuration Release --no-build
 corepack pnpm --dir apps/web install --frozen-lockfile
 corepack pnpm --dir apps/web lint
 corepack pnpm --dir apps/web typecheck
+corepack pnpm --dir apps/web test:seo
+corepack pnpm --dir apps/web test:storefront
 corepack pnpm --dir apps/web build
 ```
 

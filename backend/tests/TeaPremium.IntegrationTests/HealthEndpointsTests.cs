@@ -5,12 +5,14 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace TeaPremium.IntegrationTests;
 
+[Collection(PostgreSqlTestGroup.Name)]
 public sealed class HealthEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly HttpClient _client;
 
-    public HealthEndpointsTests(WebApplicationFactory<Program> factory)
+    public HealthEndpointsTests(WebApplicationFactory<Program> factory, PostgreSqlFixture database)
     {
+        ArgumentNullException.ThrowIfNull(database);
         var connectionString = PostgreSqlFixture.GetRequiredConnectionString();
 
         _client = factory.WithWebHostBuilder(builder =>
@@ -43,6 +45,29 @@ public sealed class HealthEndpointsTests : IClassFixture<WebApplicationFactory<P
 
         Assert.Equal("Healthy", document.RootElement.GetProperty("status").GetString());
         Assert.NotEmpty(document.RootElement.GetProperty("checks").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task ReadinessFailsWhenPostgresIsUnavailableButLivenessStaysHealthy()
+    {
+        await using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Development");
+            builder.UseSetting("ConnectionStrings:Postgres",
+                "Host=127.0.0.1;Port=1;Database=unavailable;Username=none;Password=none;Timeout=1");
+        });
+        using var client = factory.CreateClient();
+
+        using var live = await client.GetAsync("/health/live");
+        Assert.Equal(HttpStatusCode.OK, live.StatusCode);
+
+        using var ready = await client.GetAsync("/health/ready");
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, ready.StatusCode);
+        using var document = JsonDocument.Parse(await ready.Content.ReadAsStringAsync());
+        Assert.Equal("Unhealthy", document.RootElement.GetProperty("status").GetString());
+        Assert.Contains(document.RootElement.GetProperty("checks").EnumerateArray(),
+            check => check.GetProperty("name").GetString() == "postgres" &&
+                     check.GetProperty("status").GetString() == "Unhealthy");
     }
 
     [Fact]

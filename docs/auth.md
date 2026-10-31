@@ -19,8 +19,8 @@ Status: Accepted for MVP (2026-10-30)
 
 | Role | Permissions |
 |---|---|
-| `Admin` | All permissions |
-| `Editor` | `Catalog.Read`, `Catalog.Write`, `Content.Read`, `Content.Write`, `SEO.Manage` |
+| `Admin` | All permissions, including `Media.Write` |
+| `Editor` | `Catalog.Read`, `Catalog.Write`, `Media.Write`, `Content.Read`, `Content.Write`, `SEO.Manage` |
 | `Publisher` | Editor permissions plus `Catalog.Publish`, `Content.Publish` |
 
 Admin-only permissions are `Leads.Read`, `Leads.Manage`, `Settings.Manage`, and `Users.Manage`. The role and role-claim rows are seeded by migration; no user or privileged account is seeded by migration or production startup.
