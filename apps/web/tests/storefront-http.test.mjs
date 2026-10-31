@@ -44,13 +44,15 @@ test("production storefront HTTP contract", { timeout: 180_000 }, async (t) => {
   let empty = false;
   let failApi = false;
   let settingsConfigured = false;
+  let visualWithoutImages = false;
   const calls = [];
   const api = createServer((req, res) => {
     calls.push({ path: req.url, cookie: req.headers.cookie, authorization: req.headers.authorization });
     const url = new URL(req.url, "http://fixture.test");
     const page = Number(url.searchParams.get("page") || 1);
     const pageSize = Number(url.searchParams.get("pageSize") || 12);
-    const pageData = { items: empty || hidden ? [] : [card, { ...card, slug: "noindex" }], page, pageSize, totalItems: empty || hidden ? 0 : 13, totalPages: empty || hidden ? 0 : Math.ceil(13 / pageSize) };
+    const visualCard = visualWithoutImages ? { ...card, coverImage: null } : card;
+    const pageData = { items: empty || hidden ? [] : [visualCard, { ...visualCard, slug: "noindex" }], page, pageSize, totalItems: empty || hidden ? 0 : 13, totalPages: empty || hidden ? 0 : Math.ceil(13 / pageSize) };
     let body;
     if (failApi) { res.writeHead(503).end(); return; }
     if (url.pathname === "/api/v1/public/seo-redirects" &&
@@ -72,7 +74,7 @@ test("production storefront HTTP contract", { timeout: 180_000 }, async (t) => {
     if (url.pathname === "/api/v1/public/categories/am-tra") body = { ...category, descriptionHtml: "<p>Danh mục từ API</p>", seo: { ...seo, seoTitle: "Danh mục thử nghiệm" }, products: pageData };
     if (url.pathname === "/api/v1/public/categories/noindex") body = { slug: "noindex", name: "Danh mục noindex", descriptionHtml: "<p>Danh mục Published, không index.</p>", seo: { ...seo, robotsIndex: false }, products: pageData };
     if (url.pathname === "/api/v1/public/products") body = pageData;
-    if (url.pathname === "/api/v1/public/products/am-public" && !hidden) body = product;
+    if (url.pathname === "/api/v1/public/products/am-public" && !hidden) body = visualWithoutImages ? { ...product, media: [] } : product;
     if (url.pathname === "/api/v1/public/products/noindex") body = noindexProduct;
     if (url.pathname === "/api/v1/public/articles") body = { items: hiddenArticle ? [noindexArticle] : [article, noindexArticle], page, pageSize, totalItems: hiddenArticle ? 1 : 2, totalPages: 1 };
     if (url.pathname === "/api/v1/public/articles/bai-viet-test" && !hiddenArticle) body = article;
@@ -234,6 +236,36 @@ test("production storefront HTTP contract", { timeout: 180_000 }, async (t) => {
       assert.match(await get("/robots.txt"), /configured\.catalog\.test\/sitemap\.xml/);
       settingsConfigured = false;
     });
+    if (process.env.STOREFRONT_CAPTURE_DIR) {
+      const { chromium } = await import("@playwright/test");
+      const { mkdir } = await import("node:fs/promises");
+      const { resolve, join } = await import("node:path");
+      const directory = resolve(process.env.STOREFRONT_CAPTURE_DIR);
+      await mkdir(directory, { recursive: true });
+      visualWithoutImages = true;
+      const browser = await chromium.launch({ channel: "chrome", headless: true });
+      try {
+        for (const [label, width, height] of [["desktop", 1440, 900], ["tablet", 768, 1024], ["mobile", 390, 844]]) {
+          const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 1 });
+          for (const [name, path] of [["category", "/danh-muc/am-tra"], ["product", "/san-pham/am-public"]]) {
+            const response = await page.goto(origin + path, { waitUntil: "networkidle" });
+            assert.equal(response.status(), 200);
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${name} ${label} horizontal overflow`);
+            await page.screenshot({ path: join(directory, `fixture-${name}-${label}.png`), fullPage: true });
+            assert.equal(await page.locator("img").evaluateAll((images) => images.filter((image) => image.complete && image.naturalWidth === 0).length), 0, `${name} ${label} broken images`);
+          }
+          if (label === "mobile") {
+            await page.locator(".sf-mobile-nav summary").click();
+            assert.equal(await page.locator(".sf-mobile-panel").isVisible(), true);
+            await page.goto(origin + "/lien-he", { waitUntil: "networkidle" });
+            await page.locator("button[type=submit]").click();
+            assert.equal(await page.locator("#lead-name-error").isVisible(), true);
+            assert.equal(await page.locator("#lead-message-error").isVisible(), true);
+          }
+          await page.close();
+        }
+      } finally { await browser.close(); visualWithoutImages = false; }
+    }
     assert.ok(calls.length > 0);
     const adminProbes = calls.filter((call) => call.path === "/api/v1/admin/auth/login");
     assert.equal(adminProbes.length, 1, "Only the explicit BFF origin probe may call Admin API");

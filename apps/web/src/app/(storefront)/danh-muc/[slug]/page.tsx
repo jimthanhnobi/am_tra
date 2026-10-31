@@ -31,5 +31,16 @@ export default async function CategoryPage(props: Props) {
   const { category, page } = await read(props);
   const { site } = await getSiteContext();
   const crumbs = [{ name: "Trang chủ", path: "/" }, { name: category.name, path: `/danh-muc/${category.slug}` }];
-  return <main id="noi-dung" className={`${contentWidth} py-9 sm:py-12`}><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd(site, crumbs)) }} /><Breadcrumbs items={crumbs} /><header className="mb-12 max-w-3xl"><p className="text-xs uppercase tracking-[0.24em] text-[#8d4f34]">Bộ sưu tập</p><h1 className="mt-4 font-serif text-4xl sm:text-5xl">{category.name}{page > 1 ? ` — Trang ${page}` : ""}</h1><div className="catalog-prose mt-6" dangerouslySetInnerHTML={{ __html: category.descriptionHtml }} /><p className="mt-5 text-sm text-[#66736c]">{category.products.totalItems} sản phẩm</p></header><ProductGrid products={category.products.items} /><Pagination data={category.products} path={`/danh-muc/${category.slug}`} /></main>;
+  return <main id="noi-dung" className={`${contentWidth} py-10 sm:py-14`}>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd(site, crumbs)) }} />
+    <Breadcrumbs items={crumbs} />
+    <header className="mb-12 border-b border-[#d9d2c3] pb-10 sm:mb-14 sm:pb-12">
+      <p className="sf-kicker">Bộ sưu tập</p>
+      <h1 className="sf-heading mt-4">{category.name}{page > 1 ? ` — Trang ${page}` : ""}</h1>
+      {category.descriptionHtml && <div className="sf-richtext mt-6 max-w-2xl text-base!" dangerouslySetInnerHTML={{ __html: category.descriptionHtml }} />}
+      <p className="mt-8 text-sm font-medium text-[#56635b]">{category.products.totalItems} sản phẩm được giới thiệu</p>
+    </header>
+    <ProductGrid products={category.products.items} />
+    <Pagination data={category.products} path={`/danh-muc/${category.slug}`} />
+  </main>;
 }

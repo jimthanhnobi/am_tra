@@ -41,6 +41,8 @@
 .sf-button-outline:hover { background: var(--sf-forest); color: #fff !important; }
 .sf-button-light { background: var(--sf-ivory); border-color: var(--sf-ivory); color: var(--sf-forest) !important; }
 .sf-button-light:hover { background: #e8e1d4; border-color: #e8e1d4; }
+.sf-contact-on-dark .sf-button { border-color: var(--sf-ivory); color: var(--sf-ivory) !important; }
+.sf-contact-on-dark .sf-button:hover { background: var(--sf-ivory); color: var(--sf-forest) !important; }
 .sf-text-link { color: var(--sf-forest); font-size: .91rem; font-weight: 600; text-decoration: underline; text-decoration-color: var(--sf-gold); text-underline-offset: .45em; }
 .sf-text-link:hover { color: var(--sf-clay); }
 

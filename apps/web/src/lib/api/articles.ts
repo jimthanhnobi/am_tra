@@ -32,3 +32,4 @@ export const getPublicArticle = cache(async (value: string) => {
 });
 
 export type PublicArticle = z.infer<typeof detail>;
+export type PublicArticlePreview = z.infer<typeof summary>;
