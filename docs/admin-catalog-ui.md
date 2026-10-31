@@ -14,7 +14,7 @@ All `/admin/*` pages are `noindex`. The protected layout checks the Identity ses
 | `/admin/brands` | Search, create and edit brands |
 | `/admin/media` | Search/filter and upload media, inspect metadata |
 
-The product editor saves a new product as Draft before allowing media attachment. The description input is plain text; the UI produces a small structured JSON document and HTML-escaped paragraphs. An existing structured description and sanitized HTML are preserved until the description field is edited. Saving does not publish. An existing Draft can be submitted for review; an InReview product can be published; a Published product can be archived. Published slugs are locked in the editor because the redirect workflow is not available.
+The product editor saves a new product as Draft before allowing media attachment. The description input is plain text; the UI produces a small structured JSON document and HTML-escaped paragraphs. An existing structured description and sanitized HTML are preserved until the description field is edited. Saving does not publish. An existing Draft can be submitted for review; an InReview product can be published; a Published product can be archived. Changing a Published slug requires confirmation and creates a 301 redirect through the Prompt 8 workflow.
 
 The UI shows `application/problem+json` validation fields and API conflict messages. Unsafe requests go through the existing `/api/admin/*` BFF with an identity-bound CSRF token. Image bytes go directly to R2 using the API-provided presigned URL. Gallery removal only detaches the asset; no physical deletion is performed.
 

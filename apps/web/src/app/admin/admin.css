@@ -1,0 +1,60 @@
+.admin-root {
+  --admin-bg: #f7f4ec;
+  --admin-panel: #fffefa;
+  --admin-forest: #233b32;
+  --admin-charcoal: #202722;
+  --admin-muted: #56635b;
+  --admin-clay: #925b3d;
+  --admin-line: #ddd8cc;
+  min-height: 100vh;
+  background: var(--admin-bg);
+  color: var(--admin-charcoal);
+}
+
+.admin-root :where(a, button, input, select, textarea, summary, [contenteditable="true"]):focus-visible {
+  outline: 3px solid var(--admin-clay);
+  outline-offset: 3px;
+}
+
+.admin-root :where(button, a) { -webkit-tap-highlight-color: transparent; }
+.admin-root :where(h1, h2, h3) { text-wrap: balance; }
+.admin-root :where(input, select, textarea) { font-size: max(1rem, 16px); }
+
+.admin-page { width: min(100%, 88rem); margin-inline: auto; }
+.admin-page-header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+.admin-eyebrow { color: var(--admin-clay); font-size: .72rem; font-weight: 700; letter-spacing: .19em; line-height: 1.5; text-transform: uppercase; }
+.admin-title { margin-top: .35rem; color: var(--admin-forest); font-family: var(--font-lora), Georgia, serif; font-size: clamp(1.8rem, 2.4vw, 2.6rem); font-weight: 500; letter-spacing: -.035em; line-height: 1.2; }
+.admin-description { margin-top: .45rem; color: var(--admin-muted); font-size: .9rem; line-height: 1.7; }
+.admin-section-title { color: var(--admin-forest); font-family: var(--font-lora), Georgia, serif; font-size: 1.3rem; font-weight: 500; }
+.admin-panel { min-width: 0; border: 1px solid var(--admin-line); border-radius: 1rem; background: var(--admin-panel); box-shadow: 0 6px 20px rgb(32 39 34 / .035); }
+.admin-table { width: 100%; border-collapse: collapse; text-align: left; font-size: .875rem; }
+.admin-table thead { background: #f4f1e9; color: var(--admin-muted); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; }
+.admin-table th { font-weight: 700; white-space: nowrap; }
+.admin-table :where(th, td) { padding: .9rem 1rem; vertical-align: middle; }
+.admin-table tbody tr { border-top: 1px solid #eeeae1; }
+.admin-table tbody tr:hover { background: #faf8f2; }
+.admin-filter-bar { display: grid; gap: .75rem; align-items: end; }
+.admin-link { color: var(--admin-forest); font-weight: 600; text-decoration: underline; text-decoration-color: #b79b6c; text-underline-offset: .22em; }
+.admin-link:hover { color: var(--admin-clay); }
+.admin-editor-nav { display: flex; flex-wrap: nowrap; gap: .4rem; overflow-x: auto; padding-block: .25rem; scrollbar-width: thin; }
+.admin-editor-nav a { flex: none; min-height: 2.5rem; display: inline-flex; align-items: center; border: 1px solid var(--admin-line); border-radius: .65rem; padding: .45rem .8rem; background: var(--admin-panel); color: var(--admin-forest); font-size: .82rem; font-weight: 600; text-decoration: none; }
+.admin-editor-nav a:hover { border-color: var(--admin-clay); background: #f7f2e9; }
+.admin-editor-section { scroll-margin-top: 7rem; }
+.admin-save-bar { position: sticky; bottom: 0; z-index: 10; margin-inline: -1rem; border-top: 1px solid var(--admin-line); background: #fffefa; padding: .8rem 1rem; box-shadow: 0 -8px 24px rgb(32 39 34 / .04); }
+.admin-root a.admin-primary-link { color: #fff; }
+.admin-root a.admin-primary-link:hover { color: #fff; }
+.admin-status-dot { display: inline-block; width: .45rem; height: .45rem; border-radius: 50%; background: currentColor; }
+
+.admin-root .article-editor .ProseMirror { min-height: 22rem; max-width: 46rem; margin-inline: auto; color: var(--admin-charcoal); font-size: 1.03rem; line-height: 1.9; }
+.admin-root .article-editor .ProseMirror:focus-visible { outline: none; }
+.admin-root .article-editor .ProseMirror h2,
+.admin-root .article-editor .ProseMirror h3 { color: var(--admin-forest); font-family: var(--font-lora), Georgia, serif; font-weight: 500; }
+
+@media (max-width: 640px) {
+  .admin-page-header { align-items: stretch; }
+  .admin-save-bar { margin-inline: -.75rem; padding-inline: .75rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-root :where(*, *::before, *::after) { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}

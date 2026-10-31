@@ -24,6 +24,7 @@ test("Admin publishes and archives a product with a cover asset", async ({ page,
   const suffix = randomUUID().slice(0, 12);
   const categorySlug = `e2e-danh-muc-${suffix}`;
   const productSlug = `e2e-san-pham-${suffix}`;
+  const renamedSlug = `e2e-doi-slug-${suffix}`;
   const title = `Sản phẩm kiểm thử ${suffix}`;
   await page.goto("/admin/categories");
   await page.getByRole("button", { name: "+ Thêm" }).click();
@@ -64,9 +65,28 @@ test("Admin publishes and archives a product with a cover asset", async ({ page,
   await expect.poll(async () => (await request.get(`/san-pham/${productSlug}`)).status()).toBe(200);
   await page.goto(`/san-pham/${productSlug}`);
   await expect(page.getByRole("heading", { name: title, level: 1 })).toBeVisible();
+  await page.goto(`/tim-kiem?q=${suffix}`);
+  await expect(page.getByRole("heading", { name: title }).getByRole("link")).toBeVisible();
+  await expect(page.getByText(`1 kết quả cho “${suffix}”`)).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: title }).getByRole("link")).toBeVisible();
+  await page.goto(`/danh-muc/${categorySlug}`);
+  await expect(page.getByRole("heading", { name: title }).getByRole("link")).toBeVisible();
 
   await page.goto(editUrl);
-  await page.getByRole("button", { name: "Lưu trữ", exact: true }).click();
+  page.once("dialog", (dialog) => void dialog.accept());
+  await page.getByLabel("Slug *").fill(renamedSlug);
+  await page.getByRole("button", { name: "Lưu thay đổi" }).click();
+  await expect.poll(async () => (await request.get(`/san-pham/${productSlug}`, { maxRedirects: 0 })).status()).toBe(301);
+  await expect.poll(async () => (await request.get(`/san-pham/${renamedSlug}`)).status()).toBe(200);
+  await page.goto(editUrl);
+  const archive = page.getByRole("button", { name: "Lưu trữ", exact: true });
+  await archive.click();
+  await expect(page.getByRole("alertdialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("alertdialog")).toBeHidden();
+  await expect(archive).toBeFocused();
+  await archive.click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Lưu trữ" }).click();
-  await expect.poll(async () => (await request.get(`/san-pham/${productSlug}`)).status()).toBe(404);
+  await expect.poll(async () => (await request.get(`/san-pham/${renamedSlug}`)).status()).toBe(404);
 });

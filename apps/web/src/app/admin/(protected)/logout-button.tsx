@@ -35,7 +35,7 @@ export function LogoutButton() {
 
   return (
     <button
-      className="rounded-full border border-white/20 px-4 py-2 text-sm text-[#f3efe6] transition hover:border-[#d8ab91] hover:text-[#d8ab91] disabled:opacity-60"
+      className="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm font-semibold text-[#233b32] transition-colors hover:bg-[#f4f1e9] disabled:opacity-60"
       disabled={pending}
       onClick={logout}
       type="button"

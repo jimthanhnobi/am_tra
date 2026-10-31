@@ -10,7 +10,7 @@ import { getSiteContext } from "@/lib/config/site-context";
 
 
 
-export default async function EditProductPage({ params }: Readonly<{ params: Promise<{ id: string }> }>) {
+export default async function EditProductPage({ params, searchParams }: Readonly<{ params: Promise<{ id: string }>; searchParams: Promise<{ returnTo?: string }> }>) {
   const user = await getCurrentAdminUser();
   if (!hasPermission(user?.permissions ?? [], permissions.catalogRead)) return <AccessDenied permission={permissions.catalogRead} />;
   const { id } = await params;
@@ -23,5 +23,7 @@ export default async function EditProductPage({ params }: Readonly<{ params: Pro
     getAdminApi<AdminBrand[]>("brands"),
     getSiteContext(),
   ]);
-  return <ProductEditor initial={product} categories={categories} brands={brands} canonicalOrigin={site.url} canWrite={hasPermission(user!.permissions, permissions.catalogWrite)} canUpload={hasPermission(user!.permissions, permissions.mediaWrite)} canPublish={hasPermission(user!.permissions, permissions.catalogPublish)} />;
+  const requestedReturnTo = (await searchParams).returnTo;
+  const returnTo = requestedReturnTo?.startsWith("/admin/products?") ? requestedReturnTo : "/admin/products";
+  return <ProductEditor initial={product} categories={categories} brands={brands} canonicalOrigin={site.url} returnTo={returnTo} canWrite={hasPermission(user!.permissions, permissions.catalogWrite)} canUpload={hasPermission(user!.permissions, permissions.mediaWrite)} canPublish={hasPermission(user!.permissions, permissions.catalogPublish)} />;
 }

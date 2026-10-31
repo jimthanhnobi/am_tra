@@ -1,13 +1,12 @@
 import Link from "next/link";
-import { Package, FolderTree, Tags, Images } from "lucide-react";
+import { Package, FolderTree, Tags, Images, ArrowUpRight } from "lucide-react";
 import { AccessDenied } from "@/components/admin/access-denied";
 import { Card } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { getCurrentAdminUser } from "@/lib/auth/server";
 import { getAdminApi } from "@/lib/api/server";
 import type { AdminCatalogSummary, AdminProductListItem, PagedResult } from "@/lib/api/catalog-types";
 import { hasPermission, permissions } from "@/lib/permissions";
-
-
 
 export default async function AdminPage() {
   const user = await getCurrentAdminUser();
@@ -24,8 +23,8 @@ export default async function AdminPage() {
     { label: "Thương hiệu", value: summary.brands, icon: Tags, href: "/admin/brands" },
     { label: "Ảnh trong thư viện", value: summary.mediaAssets, icon: Images, href: "/admin/media" },
   ];
-  return <main className="space-y-8"><div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9c6349]">Tổng quan catalog</p><h1 className="mt-2 font-serif text-3xl">Bảng điều khiển</h1><p className="mt-2 text-sm text-[#718077]">Số liệu trực tiếp từ Catalog API.</p></div>
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{metrics.map(({ label, value, icon: Icon, href }) => <Link key={label} href={href}><Card className="p-5 transition hover:border-[#b9c9bd]"><Icon className="mb-4 text-[#8d4f34]" size={22} /><p className="text-sm text-[#718077]">{label}</p><p className="mt-2 font-serif text-3xl">{value}</p></Card></Link>)}</div>
-    <Card className="p-6"><div className="mb-4 flex items-center justify-between"><h2 className="font-serif text-xl">Sản phẩm cập nhật gần đây</h2><Link className="text-sm font-semibold text-[#8d4f34] hover:underline" href="/admin/products">Xem tất cả</Link></div>{recent.items.length ? <ul className="divide-y divide-[#eee8dd]">{recent.items.map((product) => <li key={product.id} className="flex items-center justify-between gap-4 py-3"><Link className="font-medium hover:underline" href={`/admin/products/${product.id}/edit`}>{product.name}</Link><span className="text-xs text-[#718077]">{new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeZone: "Asia/Ho_Chi_Minh" }).format(new Date(product.updatedAtUtc))}</span></li>)}</ul> : <p className="text-sm text-[#718077]">Chưa có sản phẩm.</p>}</Card>
+  return <main className="space-y-7"><header className="admin-page-header"><div><p className="admin-eyebrow">Không gian làm việc</p><h1 className="admin-title">Tổng quan catalog</h1><p className="admin-description">Số liệu trực tiếp từ Catalog API, cập nhật theo dữ liệu hiện có.</p></div><Link href="/admin/products" className="admin-link inline-flex min-h-11 items-center gap-1 text-sm">Mở danh sách sản phẩm <ArrowUpRight size={16} aria-hidden="true" /></Link></header>
+    <section aria-label="Số liệu catalog" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{metrics.map(({ label, value, icon: Icon, href }) => <Link key={label} href={href} className="group"><Card className="flex min-h-36 items-start justify-between p-5 transition-colors group-hover:border-[#b79b6c]"><div><p className="text-sm font-medium text-[#56635b]">{label}</p><p className="mt-4 font-serif text-4xl leading-none text-[#233b32]">{value}</p></div><span className="grid size-10 place-items-center rounded-lg bg-[#e7eee8] text-[#233b32]"><Icon size={20} aria-hidden="true" /></span></Card></Link>)}</section>
+    <Card className="p-5 sm:p-6"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><p className="admin-eyebrow">Mới cập nhật</p><h2 className="admin-section-title mt-1">Sản phẩm gần đây</h2></div><Link className="admin-link text-sm" href="/admin/products">Xem tất cả</Link></div>{recent.items.length ? <ul className="divide-y divide-[#eeeae1]">{recent.items.map((product) => <li key={product.id} className="flex flex-wrap items-center justify-between gap-2 py-3"><div className="min-w-0"><Link className="admin-link text-sm" href={`/admin/products/${product.id}/edit`}>{product.name}</Link><p className="mt-1 text-xs text-[#56635b]">{new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeZone: "Asia/Ho_Chi_Minh" }).format(new Date(product.updatedAtUtc))}</p></div><StatusBadge status={product.status} /></li>)}</ul> : <p className="py-8 text-center text-sm text-[#56635b]">Chưa có sản phẩm để hiển thị.</p>}</Card>
   </main>;
 }

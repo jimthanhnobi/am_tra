@@ -8,7 +8,7 @@ import type { AdminArticleDetail, ArticleCategory } from "@/lib/api/article-type
 import { ArticleForm } from "../../article-form";
 import { getSiteContext } from "@/lib/config/site-context";
 
-export default async function EditArticlePage({ params }: Readonly<{ params: Promise<{ id: string }> }>) {
+export default async function EditArticlePage({ params, searchParams }: Readonly<{ params: Promise<{ id: string }>; searchParams: Promise<{ returnTo?: string }> }>) {
   const user = await getCurrentAdminUser();
   if (!hasPermission(user?.permissions ?? [], permissions.contentRead)) return <AccessDenied permission={permissions.contentRead} />;
   const { id } = await params;
@@ -17,5 +17,7 @@ export default async function EditArticlePage({ params }: Readonly<{ params: Pro
   try { article = await getAdminApi<AdminArticleDetail>(`articles/${id}`); }
   catch (error) { if (error instanceof AdminApiError && error.status === 404) notFound(); throw error; }
   const [categories, { site }] = await Promise.all([getAdminApi<ArticleCategory[]>("article-categories"), getSiteContext()]);
-  return <ArticleForm initial={article} categories={categories} canonicalOrigin={site.url} canWrite={hasPermission(user!.permissions, permissions.contentWrite)} canPublish={hasPermission(user!.permissions, permissions.contentPublish)} />;
+  const requestedReturnTo = (await searchParams).returnTo;
+  const returnTo = /^\/admin\/articles\?page=\d+$/.test(requestedReturnTo ?? "") ? requestedReturnTo : "/admin/articles";
+  return <ArticleForm initial={article} categories={categories} canonicalOrigin={site.url} returnTo={returnTo} canWrite={hasPermission(user!.permissions, permissions.contentWrite)} canPublish={hasPermission(user!.permissions, permissions.contentPublish)} />;
 }

@@ -16,7 +16,8 @@ export function ProductGrid({ products, headingLevel = 2 }: Readonly<{ products:
   const Heading = headingLevel === 2 ? "h2" : "h3";
   return <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:gap-7">
     {products.map((product) => <article key={product.slug} className="sf-card group min-w-0">
-      <Link href={`/san-pham/${product.slug}`} aria-label={`Xem ${product.name}`} className="sf-card-media block aspect-[4/5] p-5 sm:p-7">
+      <Link href={`/san-pham/${product.slug}`} className="sf-card-media block aspect-[4/5] p-5 sm:p-7">
+        <span className="sr-only">{product.name}</span>
         <CatalogImage image={product.coverImage} sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 30vw" />
       </Link>
       <div className="flex min-h-52 flex-col p-6">

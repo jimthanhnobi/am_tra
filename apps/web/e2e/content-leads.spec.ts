@@ -27,9 +27,10 @@ test("article moves from draft to public HTML, then archive removes it", async (
   await page.getByLabel("Slug").fill(slug);
   await page.getByLabel("Tóm tắt").fill("Nội dung kiểm thử trình biên tập, không phải thông tin sản phẩm.");
   await page.locator(".article-editor [contenteditable='true']").fill("Nội dung kiểm thử từ trình duyệt.");
+  await page.locator("#article-seo summary").click();
   await page.getByLabel("SEO title").fill(title);
   await page.getByLabel("Meta description").fill("Bài viết kiểm thử luồng xuất bản CMS.");
-  await page.getByRole("button", { name: "Lưu bài viết" }).click();
+  await page.getByRole("button", { name: "Lưu bản nháp" }).click();
   await expect(page).toHaveURL(/\/admin\/articles\/[0-9a-f-]+\/edit$/);
   const editUrl = page.url();
 
@@ -38,7 +39,9 @@ test("article moves from draft to public HTML, then archive removes it", async (
   await expect(page.getByText("Preview HTML đã lưu")).toBeVisible();
   await expect(page.locator(".catalog-prose").getByText("Nội dung kiểm thử từ trình duyệt.")).toBeVisible();
   await page.getByRole("button", { name: "Gửi duyệt" }).click();
-  await page.getByRole("button", { name: "Publish", exact: true }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Gửi duyệt" }).click();
+  await page.getByRole("button", { name: "Xuất bản", exact: true }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Xuất bản" }).click();
   await expect.poll(async () => (await request.get(publicPath)).status()).toBe(200);
   const publicResponse = await page.goto(publicPath);
   expect(publicResponse?.status()).toBe(200);
@@ -48,7 +51,8 @@ test("article moves from draft to public HTML, then archive removes it", async (
   await expect(page.locator("body")).not.toContainText("contentJson");
 
   await page.goto(editUrl);
-  await page.getByRole("button", { name: "Archive" }).click();
+  await page.getByRole("button", { name: "Lưu trữ" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Lưu trữ" }).click();
   await expect.poll(async () => (await request.get(publicPath)).status()).toBe(404);
 });
 
@@ -58,7 +62,8 @@ test("contact form creates one consented lead that Admin can manage", async ({ p
   await page.getByLabel("Tên của bạn").fill(name);
   await page.getByLabel("Email").fill("browser-test@example.invalid");
   await page.getByLabel("Nội dung").fill("Yêu cầu thử nghiệm biểu mẫu từ trình duyệt.");
-  await expect(page.getByRole("button", { name: "Gửi yêu cầu" })).toBeDisabled();
+  await page.getByRole("button", { name: "Gửi yêu cầu" }).click();
+  await expect(page.locator("#tu-van").getByRole("alert")).toContainText("đồng ý");
   await page.getByLabel(/Tôi đồng ý gửi thông tin liên hệ/).check();
   await page.getByRole("button", { name: "Gửi yêu cầu" }).click();
   await expect(page.getByRole("status")).toContainText("đã được ghi nhận");

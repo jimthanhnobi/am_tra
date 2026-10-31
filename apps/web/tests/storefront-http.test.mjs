@@ -247,7 +247,7 @@ test("production storefront HTTP contract", { timeout: 180_000 }, async (t) => {
       try {
         for (const [label, width, height] of [["desktop", 1440, 900], ["tablet", 768, 1024], ["mobile", 390, 844]]) {
           const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 1 });
-          for (const [name, path] of [["category", "/danh-muc/am-tra"], ["product", "/san-pham/am-public"]]) {
+          for (const [name, path] of [["home", "/"], ["search", "/tim-kiem?q=am"], ["contact", "/lien-he"], ["category", "/danh-muc/am-tra"], ["product", "/san-pham/am-public"]]) {
             const response = await page.goto(origin + path, { waitUntil: "networkidle" });
             assert.equal(response.status(), 200);
             assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${name} ${label} horizontal overflow`);
@@ -257,10 +257,12 @@ test("production storefront HTTP contract", { timeout: 180_000 }, async (t) => {
           if (label === "mobile") {
             await page.locator(".sf-mobile-nav summary").click();
             assert.equal(await page.locator(".sf-mobile-panel").isVisible(), true);
+            await page.screenshot({ path: join(directory, "fixture-mobile-nav-open.png"), fullPage: false });
             await page.goto(origin + "/lien-he", { waitUntil: "networkidle" });
             await page.locator("button[type=submit]").click();
             assert.equal(await page.locator("#lead-name-error").isVisible(), true);
             assert.equal(await page.locator("#lead-message-error").isVisible(), true);
+            await page.screenshot({ path: join(directory, "fixture-contact-errors-mobile.png"), fullPage: true });
           }
           await page.close();
         }

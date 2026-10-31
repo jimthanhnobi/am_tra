@@ -14,8 +14,8 @@ const limits: Partial<Record<TextField, number>> = {
   openingHours: 300, defaultSeoTitle: 200, defaultMetaDescription: 500,
   publicWebsiteUrl: 2048,
 };
-const inputClass = "mt-2 w-full rounded-xl border border-[#d8d1c3] bg-white px-4 py-3 text-sm text-[#20362c] outline-none focus:border-[#183c31] focus:ring-2 focus:ring-[#183c31]/10";
-const sectionClass = "rounded-2xl border border-[#ded7ca] bg-[#fbf9f4] p-6 shadow-sm sm:p-8";
+const inputClass = "mt-2 w-full rounded-xl border border-[#d8d1c3] bg-white px-4 py-3 text-sm text-[#20362c] outline-none focus:border-[#233b32] focus:ring-2 focus:ring-[#233b32]/10";
+const sectionClass = "rounded-2xl border border-[#ddd8cc] bg-[#fffefa] p-6 shadow-sm sm:p-8";
 
 function validSocial(value: string | null, hosts: string[]) {
   if (!value) return true;
@@ -54,7 +54,7 @@ export function SiteSettingsForm({ initial }: Readonly<{ initial: AdminSiteSetti
       setValues((current) => ({ ...current, [key]: event.target.value || null })) };
     return <label className="block text-sm font-medium" key={key}>{label}
       {multiline ? <textarea {...common} rows={3} /> : <input {...common} type={key === "email" ? "email" : key.endsWith("Url") ? "url" : "text"} />}
-      {limits[key] && <span className="mt-1 block text-right text-xs font-normal text-[#718077]">{value.length}/{limits[key]}</span>}
+      {limits[key] && <span className="mt-1 block text-right text-xs font-normal text-[#56635b]">{value.length}/{limits[key]}</span>}
     </label>;
   }
 
@@ -74,15 +74,15 @@ export function SiteSettingsForm({ initial }: Readonly<{ initial: AdminSiteSetti
   }
 
   return <main className="mx-auto max-w-5xl space-y-7">
-    <header><p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8d4f34]">Website</p><h1 className="mt-2 font-serif text-3xl">Cài đặt website</h1><p className="mt-2 max-w-2xl text-sm leading-7 text-[#718077]">Chỉ nhập thông tin đã được xác minh. Thay đổi được công bố qua Public API; cấu hình hạ tầng và secret vẫn nằm ở môi trường triển khai.</p>{updatedAt && <p className="mt-2 text-xs text-[#718077]">Lưu gần nhất: {new Date(updatedAt).toLocaleString("vi-VN")}</p>}</header>
+    <header><p className="admin-eyebrow">Website</p><h1 className="admin-title">Cài đặt website</h1><p className="mt-2 max-w-2xl text-sm leading-7 text-[#56635b]">Chỉ nhập thông tin đã được xác minh. Thay đổi được công bố qua Public API; cấu hình hạ tầng và secret vẫn nằm ở môi trường triển khai.</p>{updatedAt && <p className="mt-2 text-xs text-[#56635b]">Lưu gần nhất: {new Date(updatedAt).toLocaleString("vi-VN")}</p>}</header>
     <form onSubmit={(event) => void save(event)} className="space-y-6">
       <section className={sectionClass}><h2 className="font-serif text-xl">General</h2><div className="mt-5 grid gap-5 md:grid-cols-2">{textField("siteName", "Tên website *")}{textField("publicWebsiteUrl", "Public Website URL (HTTPS)")}<div className="md:col-span-2">{textField("siteDescription", "Mô tả website", true)}</div></div></section>
       <section className={sectionClass}><h2 className="font-serif text-xl">Brand Identity</h2><div className="mt-5 space-y-5">{textField("brandTagline", "Brand tagline")}<div className="grid gap-5 md:grid-cols-2"><SeoImagePicker value={values.logoAssetId} onChange={(id) => setValues((current) => ({ ...current, logoAssetId: id }))} label="Logo" /><SeoImagePicker value={values.faviconAssetId} onChange={(id) => setValues((current) => ({ ...current, faviconAssetId: id }))} label="Favicon" /></div></div></section>
       <section className={sectionClass}><h2 className="font-serif text-xl">Contact Information</h2><div className="mt-5 grid gap-5 md:grid-cols-2">{textField("hotline", "Hotline")}{textField("email", "Email")}<div className="md:col-span-2">{textField("address", "Địa chỉ (tùy chọn)", true)}</div><div className="md:col-span-2">{textField("openingHours", "Giờ mở cửa (tùy chọn)", true)}</div></div></section>
-      <section className={sectionClass}><h2 className="font-serif text-xl">SEO Defaults</h2><div className="mt-5 space-y-5">{textField("defaultSeoTitle", "SEO title mặc định")}{textField("defaultMetaDescription", "Meta description mặc định", true)}<SeoImagePicker value={values.defaultOgImageAssetId} onChange={(id) => setValues((current) => ({ ...current, defaultOgImageAssetId: id }))} label="OG image mặc định" /><div className="rounded-xl border border-[#d8d1c3] bg-white p-4"><p className="text-xs text-[#718077]">Xem trước kết quả tìm kiếm</p><p className="mt-2 text-lg text-[#315d90]">{values.defaultSeoTitle || values.siteName || "Tiêu đề chưa cấu hình"}</p><p className="mt-1 text-sm text-[#626f66]">{values.defaultMetaDescription || values.siteDescription || "Mô tả chưa cấu hình"}</p><p className="mt-2 break-all text-xs text-[#477043]">{values.publicWebsiteUrl || "Canonical URL chưa cấu hình"}</p></div></div></section>
+      <section className={sectionClass}><h2 className="font-serif text-xl">SEO Defaults</h2><div className="mt-5 space-y-5">{textField("defaultSeoTitle", "SEO title mặc định")}{textField("defaultMetaDescription", "Meta description mặc định", true)}<SeoImagePicker value={values.defaultOgImageAssetId} onChange={(id) => setValues((current) => ({ ...current, defaultOgImageAssetId: id }))} label="OG image mặc định" /><div className="rounded-xl border border-[#d8d1c3] bg-white p-4"><p className="text-xs text-[#56635b]">Xem trước kết quả tìm kiếm</p><p className="mt-2 text-lg text-[#315d90]">{values.defaultSeoTitle || values.siteName || "Tiêu đề chưa cấu hình"}</p><p className="mt-1 text-sm text-[#626f66]">{values.defaultMetaDescription || values.siteDescription || "Mô tả chưa cấu hình"}</p><p className="mt-2 break-all text-xs text-[#477043]">{values.publicWebsiteUrl || "Canonical URL chưa cấu hình"}</p></div></div></section>
       <section className={sectionClass}><h2 className="font-serif text-xl">Social Links</h2><div className="mt-5 grid gap-5 md:grid-cols-2">{textField("zaloUrl", "Zalo URL")}{textField("facebookUrl", "Facebook URL")}</div></section>
       {error && <p role="alert" className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-800">{error}</p>}
-      <button type="submit" disabled={busy} className="rounded-xl bg-[#183c31] px-6 py-3 text-sm font-medium text-white disabled:opacity-50">{busy ? "Đang lưu…" : "Lưu cài đặt"}</button>
+      <button type="submit" disabled={busy} className="rounded-xl bg-[#233b32] px-6 py-3 text-sm font-medium text-white disabled:opacity-50">{busy ? "Đang lưu…" : "Lưu cài đặt"}</button>
     </form>
   </main>;
 }

@@ -21,10 +21,11 @@ export default async function StorefrontLayout({ children }: Readonly<{ children
     <a href="#noi-dung" className="sr-only z-50 bg-white p-3 focus:not-sr-only focus:fixed focus:left-2 focus:top-2">Đến nội dung chính</a>
     <header className="sf-header">
       <div className="sf-container flex min-h-20 items-center justify-between gap-5 py-3 lg:min-h-24">
-        <Link href="/" aria-label={`${site.name} — trang chủ`} className="min-w-0 shrink-0 text-[#233b32] no-underline">
+        <Link href="/" className="min-w-0 shrink-0 text-[#233b32] no-underline">
           {logoUrl ? <span className="relative block h-10 w-40 sm:w-48"><Image src={logoUrl} alt={site.name} fill sizes="192px" className="object-contain object-left" /></span>
             : <span className="block font-serif text-[1.55rem] leading-none tracking-[-0.04em] sm:text-[1.8rem]">{site.name}</span>}
           {tagline && <span className="mt-1.5 block text-[.58rem] font-semibold uppercase tracking-[.22em] text-[#925b3d] sm:text-[.65rem]">{tagline}</span>}
+          <span className="sr-only"> — trang chủ</span>
         </Link>
         <nav aria-label="Điều hướng chính" className="hidden items-center gap-6 lg:flex xl:gap-9">
           {navigation.map((item) => <Link key={item.href} href={item.href} className="sf-nav-link">{item.label}</Link>)}

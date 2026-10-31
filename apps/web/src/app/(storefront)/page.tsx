@@ -30,7 +30,7 @@ export default async function HomePage() {
         </div>
         <div className="sf-hero-art mx-auto w-full max-w-[34rem]">
           {cover ? <div className="absolute inset-0 p-7 sm:p-10"><CatalogImage image={cover} priority sizes="(max-width: 768px) 90vw, 540px" /></div>
-            : <div className="sf-hero-empty"><p className="font-serif text-2xl text-[#233b32]">Một nơi để khám phá trà cụ.</p><p className="mt-3 text-sm text-[#56635b]">Hình ảnh sản phẩm sẽ xuất hiện khi được công bố.</p></div>}
+            : <div className="sf-hero-empty"><p className="font-serif text-2xl text-[#233b32]">Một nơi để khám phá trà cụ.</p><p className="mt-3 text-sm text-[#37483e]">Hình ảnh sản phẩm sẽ xuất hiện khi được công bố.</p></div>}
         </div>
       </div>
     </section>

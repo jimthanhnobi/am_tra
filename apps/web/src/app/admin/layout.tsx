@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import "./admin.css";
 
 export const metadata: Metadata = {
   title: "Quản trị",
@@ -12,6 +13,6 @@ export const metadata: Metadata = {
 };
 
 export default function AdminLayout({ children }: Readonly<{ children: ReactNode }>) {
-  return children;
+  return <div className="admin-root">{children}</div>;
 }
 

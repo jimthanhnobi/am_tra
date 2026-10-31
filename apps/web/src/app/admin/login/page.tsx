@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default function AdminLoginPage() {
   return (
-    <main className="grid min-h-screen place-items-center bg-[#14251f] px-6 py-16 text-[#f3efe6]">
+    <main className="grid min-h-screen place-items-center bg-[#14251f] px-6 py-16 text-[#f7f4ec]">
       <section className="w-full max-w-md rounded-2xl border border-white/15 bg-white/[0.05] p-8 shadow-2xl shadow-black/25 sm:p-10">
         <div className="flex items-center gap-3">
           <span className="grid size-11 place-items-center rounded-full border border-[#d8ab91] font-serif text-sm text-[#d8ab91]">
