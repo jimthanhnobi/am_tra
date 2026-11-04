@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TeaPremium.Domain.Catalog;
+using TeaPremium.Domain.Commerce;
 using TeaPremium.Domain.Content;
 using TeaPremium.Domain.Leads;
 using TeaPremium.Domain.Media;
@@ -14,6 +15,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>(options)
 {
     public const string ConnectionStringName = "Postgres";
+
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<CustomerInteraction> CustomerInteractions => Set<CustomerInteraction>();
+    public DbSet<SalesOrder> SalesOrders => Set<SalesOrder>();
+    public DbSet<SalesOrderItem> SalesOrderItems => Set<SalesOrderItem>();
 
     public DbSet<Product> Products => Set<Product>();
 

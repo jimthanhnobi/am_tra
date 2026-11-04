@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics;
 using TeaPremium.Application.Catalog;
+using TeaPremium.Application.Commerce;
 using TeaPremium.Application.Content;
 using TeaPremium.Application.Leads;
 using TeaPremium.Application.Media;
@@ -40,6 +41,18 @@ internal sealed class CatalogExceptionHandler : IExceptionHandler
             ContentConflictException conflict => Results.Problem(
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Content conflict.",
+                detail: conflict.Message),
+            CommerceInputException invalid => Results.Problem(
+                statusCode: StatusCodes.Status422UnprocessableEntity,
+                title: "Commerce input invalid.",
+                detail: invalid.Message),
+            CommerceNotFoundException missing => Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Commerce resource not found.",
+                detail: missing.Message),
+            CommerceConflictException conflict => Results.Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Commerce conflict.",
                 detail: conflict.Message),
             LeadValidationException validation => Results.Problem(
                 statusCode: StatusCodes.Status422UnprocessableEntity,

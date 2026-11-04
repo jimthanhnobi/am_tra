@@ -22,6 +22,77 @@ namespace TeaPremium.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+
+            modelBuilder.Entity("TeaPremium.Domain.Commerce.Customer", b =>
+                {
+                    b.Property<Guid>("Id").HasColumnType("uuid").HasColumnName("id");
+                    b.Property<string>("Name").IsRequired().HasMaxLength(200).HasColumnType("character varying(200)").HasColumnName("name");
+                    b.Property<string>("Phone").IsRequired().HasMaxLength(30).HasColumnType("character varying(30)").HasColumnName("phone");
+                    b.Property<string>("NormalizedPhone").IsRequired().HasMaxLength(20).HasColumnType("character varying(20)").HasColumnName("normalized_phone");
+                    b.Property<string>("Origin").IsRequired().HasMaxLength(30).HasColumnType("character varying(30)").HasColumnName("origin");
+                    b.Property<string>("AcquisitionSource").IsRequired().HasMaxLength(40).HasColumnType("character varying(40)").HasColumnName("acquisition_source");
+                    b.Property<bool>("HadPriorPurchase").HasColumnType("boolean").HasColumnName("had_prior_purchase");
+                    b.Property<string[]>("Tags").IsRequired().HasColumnType("text[]").HasColumnName("tags");
+                    b.Property<DateTimeOffset>("CreatedAtUtc").HasColumnType("timestamp with time zone").HasColumnName("created_at_utc");
+                    b.HasKey("Id").HasName("pk_customers");
+                    b.HasIndex("NormalizedPhone").IsUnique().HasDatabaseName("ux_customers_normalized_phone");
+                    b.HasIndex("CreatedAtUtc").HasDatabaseName("ix_customers_created_at_utc");
+                    b.ToTable("customers", (string)null);
+                });
+
+            modelBuilder.Entity("TeaPremium.Domain.Commerce.CustomerInteraction", b =>
+                {
+                    b.Property<Guid>("Id").HasColumnType("uuid").HasColumnName("id");
+                    b.Property<Guid>("CustomerId").HasColumnType("uuid").HasColumnName("customer_id");
+                    b.Property<string>("Channel").IsRequired().HasMaxLength(30).HasColumnType("character varying(30)").HasColumnName("channel");
+                    b.Property<string>("Kind").IsRequired().HasMaxLength(30).HasColumnType("character varying(30)").HasColumnName("kind");
+                    b.Property<string>("Notes").IsRequired().HasMaxLength(2000).HasColumnType("character varying(2000)").HasColumnName("notes");
+                    b.Property<DateTimeOffset>("OccurredAtUtc").HasColumnType("timestamp with time zone").HasColumnName("occurred_at_utc");
+                    b.HasKey("Id").HasName("pk_customer_interactions");
+                    b.HasIndex("CustomerId", "OccurredAtUtc").HasDatabaseName("ix_customer_interactions_customer_time");
+                    b.ToTable("customer_interactions", (string)null);
+                });
+
+            modelBuilder.Entity("TeaPremium.Domain.Commerce.SalesOrder", b =>
+                {
+                    b.Property<Guid>("Id").HasColumnType("uuid").HasColumnName("id");
+                    b.Property<string>("OrderCode").IsRequired().HasMaxLength(32).HasColumnType("character varying(32)").HasColumnName("order_code");
+                    b.Property<Guid>("RequestId").HasColumnType("uuid").HasColumnName("request_id");
+                    b.Property<Guid>("CustomerId").HasColumnType("uuid").HasColumnName("customer_id");
+                    b.Property<Guid?>("LeadId").HasColumnType("uuid").HasColumnName("lead_id");
+                    b.Property<string>("ClosingChannel").IsRequired().HasMaxLength(30).HasColumnType("character varying(30)").HasColumnName("closing_channel");
+                    b.Property<string>("AcquisitionSource").IsRequired().HasMaxLength(40).HasColumnType("character varying(40)").HasColumnName("acquisition_source");
+                    b.Property<bool>("IsReturning").HasColumnType("boolean").HasColumnName("is_returning");
+                    b.Property<string>("CampaignCode").HasMaxLength(100).HasColumnType("character varying(100)").HasColumnName("campaign_code");
+                    b.Property<TeaPremium.Domain.Commerce.SalesOrderStatus>("Status").HasConversion<string>().HasMaxLength(20).HasColumnType("character varying(20)").HasColumnName("status");
+                    b.Property<decimal>("TotalAmount").HasPrecision(18, 2).HasColumnType("numeric(18,2)").HasColumnName("total_amount");
+                    b.Property<DateTimeOffset>("CreatedAtUtc").HasColumnType("timestamp with time zone").HasColumnName("created_at_utc");
+                    b.Property<DateTimeOffset?>("CompletedAtUtc").HasColumnType("timestamp with time zone").HasColumnName("completed_at_utc");
+                    b.HasKey("Id").HasName("pk_sales_orders");
+                    b.HasIndex("OrderCode").IsUnique().HasDatabaseName("ux_sales_orders_order_code");
+                    b.HasIndex("RequestId").IsUnique().HasDatabaseName("ux_sales_orders_request_id");
+                    b.HasIndex("CustomerId", "CreatedAtUtc").HasDatabaseName("ix_sales_orders_customer_time");
+                    b.HasIndex("Status", "CompletedAtUtc").HasDatabaseName("ix_sales_orders_completed");
+                    b.HasIndex("LeadId").HasDatabaseName("ix_sales_orders_lead_id");
+                    b.ToTable("sales_orders", (string)null);
+                });
+
+            modelBuilder.Entity("TeaPremium.Domain.Commerce.SalesOrderItem", b =>
+                {
+                    b.Property<Guid>("Id").HasColumnType("uuid").HasColumnName("id");
+                    b.Property<Guid>("SalesOrderId").HasColumnType("uuid").HasColumnName("sales_order_id");
+                    b.Property<Guid>("ProductId").HasColumnType("uuid").HasColumnName("product_id");
+                    b.Property<string>("ProductName").IsRequired().HasMaxLength(300).HasColumnType("character varying(300)").HasColumnName("product_name");
+                    b.Property<string>("Sku").HasMaxLength(100).HasColumnType("character varying(100)").HasColumnName("sku");
+                    b.Property<int>("Quantity").HasColumnType("integer").HasColumnName("quantity");
+                    b.Property<decimal>("UnitPrice").HasPrecision(18, 2).HasColumnType("numeric(18,2)").HasColumnName("unit_price");
+                    b.Property<decimal?>("UnitCost").HasPrecision(18, 2).HasColumnType("numeric(18,2)").HasColumnName("unit_cost");
+                    b.HasKey("Id").HasName("pk_sales_order_items");
+                    b.HasIndex("SalesOrderId").HasDatabaseName("ix_sales_order_items_sales_order_id");
+                    b.HasIndex("ProductId").HasDatabaseName("ix_sales_order_items_product_id");
+                    b.ToTable("sales_order_items", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.Property<int>("Id")
@@ -1731,6 +1802,52 @@ namespace TeaPremium.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("LogoAssetId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+
+            modelBuilder.Entity("TeaPremium.Domain.Commerce.CustomerInteraction", b =>
+                {
+                    b.HasOne("TeaPremium.Domain.Commerce.Customer", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_interactions_customers");
+                });
+
+            modelBuilder.Entity("TeaPremium.Domain.Commerce.SalesOrder", b =>
+                {
+                    b.HasOne("TeaPremium.Domain.Commerce.Customer", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_sales_orders_customers");
+
+                    b.HasOne("TeaPremium.Domain.Leads.Lead", null)
+                        .WithMany()
+                        .HasForeignKey("LeadId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_sales_orders_leads");
+
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("TeaPremium.Domain.Commerce.SalesOrderItem", b =>
+                {
+                    b.HasOne("TeaPremium.Domain.Commerce.SalesOrder", null)
+                        .WithMany("Items")
+                        .HasForeignKey("SalesOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_sales_order_items_orders");
+
+                    b.HasOne("TeaPremium.Domain.Catalog.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_sales_order_items_products");
                 });
 
             modelBuilder.Entity("TeaPremium.Domain.Catalog.Brand", b =>

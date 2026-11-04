@@ -1,6 +1,7 @@
 using Ganss.Xss;
 using Microsoft.Extensions.DependencyInjection;
 using TeaPremium.Application.Catalog;
+using TeaPremium.Application.Commerce;
 using TeaPremium.Application.Content;
 using TeaPremium.Application.Leads;
 using TeaPremium.Application.Media;
@@ -19,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<ArticleContentRenderer>();
         services.AddScoped<ArticleService>();
         services.AddScoped<LeadService>();
+        services.AddScoped<CommerceService>();
         services.AddScoped<IMediaService, MediaService>();
         services.AddScoped<SiteSettingsService>();
         services.AddSingleton(TimeProvider.System);

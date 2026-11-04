@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { LayoutDashboard, Package, FolderTree, Tags, Images, Menu, X, BookOpen, Inbox, Settings2, ChevronDown, UserRound } from "lucide-react";
+import { LayoutDashboard, Package, FolderTree, Tags, Images, Menu, X, BookOpen, Inbox, Settings2, ChevronDown, UserRound, Users, ShoppingBag, ChartNoAxesCombined } from "lucide-react";
 import { Toaster } from "sonner";
 import type { CurrentAdminUser } from "@/lib/auth/types";
 import { permissions, hasPermission } from "@/lib/permissions";
@@ -18,6 +18,9 @@ const links = [
   { href: "/admin/articles", label: "Bài viết", icon: BookOpen, group: "Nội dung" },
   { href: "/admin/article-categories", label: "Danh mục bài viết", icon: FolderTree, group: "Nội dung" },
   { href: "/admin/leads", label: "Yêu cầu tư vấn", icon: Inbox, group: "Khách liên hệ" },
+  { href: "/admin/customers", label: "Khách hàng", icon: Users, group: "Khách liên hệ" },
+  { href: "/admin/orders", label: "Đơn hàng", icon: ShoppingBag, group: "Bán hàng" },
+  { href: "/admin/reports", label: "Báo cáo", icon: ChartNoAxesCombined, group: "Bán hàng" },
   { href: "/admin/settings", label: "Cài đặt website", icon: Settings2, group: "Hệ thống" },
 ] as const;
 
@@ -31,7 +34,7 @@ export function AdminShell({ user, children }: Readonly<{ user: CurrentAdminUser
   const canReadContent = hasPermission(user.permissions, permissions.contentRead);
   const canReadLeads = hasPermission(user.permissions, permissions.leadsRead);
   const canManageSettings = hasPermission(user.permissions, permissions.settingsManage);
-  const visible = links.filter((link) => link.href === "/admin" || (link.href === "/admin/settings" ? canManageSettings : link.href === "/admin/leads" ? canReadLeads : link.href.startsWith("/admin/article") ? canReadContent : canRead));
+  const visible = links.filter((link) => link.href === "/admin" || (link.href === "/admin/settings" ? canManageSettings : (link.href === "/admin/leads" || link.href === "/admin/customers" || link.href === "/admin/orders" || link.href === "/admin/reports") ? canReadLeads : link.href.startsWith("/admin/article") ? canReadContent : canRead));
   const detail = pathname.endsWith("/new") ? "Tạo mới" : pathname.includes("/edit") ? "Chỉnh sửa" : null;
 
   useEffect(() => {
@@ -53,7 +56,7 @@ export function AdminShell({ user, children }: Readonly<{ user: CurrentAdminUser
         <button ref={menuCloseRef} type="button" aria-label="Đóng menu" className="grid size-10 place-items-center rounded-lg hover:bg-white/10 lg:hidden" onClick={() => { setOpen(false); menuTriggerRef.current?.focus(); }}><X size={20} /></button>
       </div>
       <nav aria-label="Quản trị" className="flex-1 overflow-y-auto px-3 py-5">
-        {["Không gian làm việc", "Catalog", "Nội dung", "Khách liên hệ", "Hệ thống"].map((group) => {
+        {["Không gian làm việc", "Catalog", "Nội dung", "Khách liên hệ", "Bán hàng", "Hệ thống"].map((group) => {
           const items = visible.filter((link) => link.group === group);
           if (!items.length) return null;
           return <div key={group} className="mb-5"><p className="px-4 pb-2 text-[.62rem] font-semibold uppercase tracking-[.2em] text-[#aebfb3]">{group}</p><div className="space-y-1">{items.map(({ href, label, icon: Icon }) => {

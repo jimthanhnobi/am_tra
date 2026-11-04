@@ -4,7 +4,7 @@
 
 - Xây dựng catalog trà cụ cao cấp ưu tiên SEO, custom CMS, quản trị và thu lead.
 - MVP phục vụ một shop, chỉ `vi-VN`; cấu trúc phải sẵn sàng cho i18n nhưng không tạo bản dịch giả.
-- Không hiển thị giá công khai; không cart, order, checkout, payment hay nút đặt hàng online. Không tạo bảng commerce trong MVP.
+- Không hiển thị giá công khai; không cart, checkout, payment hay nút đặt hàng online. Ngoại lệ giai đoạn CRM: có bảng `sales_orders` **chỉ trong Admin** để ghi nhận đơn tư vấn/chốt ngoài website; tuyệt đối không lộ giá, đơn nội bộ trên Public API.
 - Không tự suy đoán thông tin shop, địa chỉ, liên hệ, xuất xứ, chứng nhận hoặc dữ liệu sản phẩm.
 
 ## Kiến trúc và dependency
