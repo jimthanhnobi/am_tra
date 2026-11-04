@@ -40,7 +40,7 @@ public sealed class DemoShowcaseSeedTests(PostgreSqlFixture database)
             .SingleAsync(p => p.Slug == "demo-am-tu-sa-tay-thi");
         Assert.Equal(PublicationStatus.Published, product.Status);
         Assert.Equal(2, product.Media.Count);
-        Assert.Single(product.Media.Where(m => m.IsCover));
+        Assert.Single(product.Media, m => m.IsCover);
         Assert.Single(product.ProductCategories);
         Assert.All(product.Media, media => Assert.Contains("demo", media.AltText, StringComparison.OrdinalIgnoreCase));
 
