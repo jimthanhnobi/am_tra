@@ -108,9 +108,10 @@ if (args.Any(argument => string.Equals(argument, "seed-demo-showcase", StringCom
     await using var scope = app.Services.CreateAsyncScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var settings = new NpgsqlConnectionStringBuilder(db.Database.GetConnectionString());
+    var databaseName = settings.Database ?? string.Empty;
     if (settings.Host is not ("localhost" or "127.0.0.1" or "postgres") ||
-        (settings.Database != "teapremium" &&
-            !settings.Database.StartsWith("teapremium_demo", StringComparison.OrdinalIgnoreCase)))
+        (databaseName != "teapremium" &&
+            !databaseName.StartsWith("teapremium_demo", StringComparison.OrdinalIgnoreCase)))
         throw new InvalidOperationException("Demo seed requires a local teapremium/teapremium_demo PostgreSQL database.");
 
     var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
