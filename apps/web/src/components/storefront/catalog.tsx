@@ -16,15 +16,15 @@ export function ProductGrid({ products, headingLevel = 2 }: Readonly<{ products:
   const Heading = headingLevel === 2 ? "h2" : "h3";
   return <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:gap-7">
     {products.map((product) => <article key={product.slug} className="sf-card group min-w-0">
-      <Link href={`/san-pham/${product.slug}`} className="sf-card-media block aspect-[4/5] p-5 sm:p-7">
+      <Link href={`/san-pham/${product.slug}`} className="sf-card-media block aspect-[5/6] p-6 sm:p-9">
         <span className="sr-only">{product.name}</span>
         <CatalogImage image={product.coverImage} sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 30vw" />
       </Link>
-      <div className="flex min-h-52 flex-col p-6">
-        <p className="sf-kicker">{product.primaryCategory?.name || "Trà cụ"}</p>
-        <Heading className="mt-3 font-serif text-[1.45rem] leading-snug text-[#233b32]"><Link href={`/san-pham/${product.slug}`} className="hover:underline">{product.name}</Link></Heading>
+      <div className="flex min-h-52 flex-col p-6 sm:p-7">
+        <p className="sf-kicker">{product.primaryCategory?.name || "Trà cụ"}{product.brand ? ` · ${product.brand.name}` : ""}</p>
+        <Heading className="mt-4 font-serif text-[1.5rem] leading-snug tracking-[-.03em] text-[#233b32]"><Link href={`/san-pham/${product.slug}`} className="hover:underline">{product.name}</Link></Heading>
         {product.summary && <p className="mt-3 line-clamp-2 text-sm leading-7 text-[#56635b]">{product.summary}</p>}
-        <Link href={`/san-pham/${product.slug}`} className="sf-text-link mt-auto pt-5">Xem chi tiết <span aria-hidden="true">↗</span></Link>
+        <Link href={`/san-pham/${product.slug}`} className="sf-text-link mt-auto inline-flex items-center gap-2 pt-6">Xem chi tiết <span aria-hidden="true">↗</span></Link>
       </div>
     </article>)}
   </div>;

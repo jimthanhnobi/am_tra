@@ -18,7 +18,7 @@ export async function generateMetadata() {
 }
 
 export default async function HomePage() {
-  const [categories, products, articles, { site, profile }] = await Promise.all([
+  const [categories, products, articles, { profile }] = await Promise.all([
     getPublicCategories(),
     getPublicProducts(1, 9),
     getPublicArticles(1, 3),

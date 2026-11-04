@@ -14,7 +14,7 @@ type ImportResult = {
   inputCount: number; newCount: number; existingCount: number; dryRun: boolean;
 };
 
-const field = "min-h-10 w-full rounded-lg border border-[#ddd8cc] bg-white px-3 py-2 text-sm";
+const field = "admin-field";
 
 /** Excel's CSV/UTF-8 exports support quoted values, commas, and CRLF. */
 function parseCsv(csv: string): string[][] {
@@ -108,7 +108,9 @@ export function CustomerImport() {
       <h1 className="admin-title">Import khách hàng cũ</h1>
       <p className="admin-description">Dành cho 400–500 khách đang có. Luôn kiểm tra trước, chỉ ghi dữ liệu sau khi xác nhận.</p>
     </div></header>
-    <div className="admin-panel space-y-4 p-5">
+    <div className="admin-panel space-y-5 p-5 sm:p-7">
+      <div className="border-b border-[#ddd8cc] pb-5"><h2 className="admin-card-heading">Danh sách khách hàng hiện có</h2>
+        <p className="admin-field-note mt-2">Bước 1: tải CSV · Bước 2: kiểm tra dữ liệu · Bước 3: xác nhận import. Không ghi đè hồ sơ có sẵn.</p></div>
       <p className="text-sm">Xuất CSV UTF-8 từ Excel với cột <code>name,phone</code> hoặc <code>ten,sdt</code>.
         Mỗi số điện thoại chỉ được tạo một lần. Import không làm thay đổi hồ sơ khách đã tồn tại.</p>
       <label className="block text-sm font-medium">File CSV
@@ -134,9 +136,9 @@ export function CustomerImport() {
       <p className="text-xs text-[#56635b]">Việc có số điện thoại không đồng nghĩa đã đồng ý nhận tin tiếp thị. Lịch sử mua hàng chưa được xác minh sẽ để chưa rõ.</p>
       <div className="flex flex-wrap gap-3">
         <button type="button" disabled={busy || !csv} onClick={() => void upload(true)}
-          className="admin-primary-button rounded-lg px-5 py-2">1. Kiểm tra dữ liệu</button>
+          className="admin-primary-button">1. Kiểm tra dữ liệu</button>
         <button type="button" disabled={busy || !preview || preview.dryRun !== true}
-          onClick={() => void upload(false)} className="rounded-lg border border-[#233b32] px-5 py-2">
+          onClick={() => void upload(false)} className="admin-secondary-button">
           2. Xác nhận ghi dữ liệu
         </button>
       </div>
@@ -146,6 +148,6 @@ export function CustomerImport() {
         <p>Chưa ghi database. Hãy xác nhận để hoàn tất.</p>
       </div>}
     </div>
-    <Link href="/admin/customers" className="admin-link">Quay lại khách hàng</Link>
+    <Link href="/admin/customers" className="admin-link inline-flex min-h-11 items-center">Quay lại khách hàng</Link>
   </main>;
 }

@@ -121,6 +121,17 @@ test("production storefront HTTP contract", { timeout: 180_000 }, async (t) => {
       assert.doesNotMatch(html, /PRIVATE_(PRICE|SPEC|ADMIN|COOKIE|AUTH)_?\w*/);
       return html;
     }
+    await t.test("editorial home and contextual product consultation use published data", async () => {
+      const home = await get("/");
+      assert.match(home, /Một chiếc ấm/);
+      assert.match(home, /Trà cụ theo/);
+      assert.match(home, /href="\/san-pham\/am-public"/);
+      assert.doesNotMatch(home, /Giỏ hàng|Thanh toán ngay|PRIVATE_PRICE_SENTINEL/);
+      const contact = await get("/lien-he?san-pham=am-public");
+      assert.match(contact, /Sản phẩm bạn đang quan tâm/);
+      assert.match(contact, /Ấm API thử nghiệm/);
+      assert.match(contact, /Tôi muốn được tư vấn sản phẩm/);
+    });
     await t.test("public product has server HTML, metadata, gallery, contact and honest JSON-LD", async () => {
       const html = await get("/san-pham/am-public");
       assert.match(html, /<h1[^>]*>Ấm API thử nghiệm<\/h1>/);

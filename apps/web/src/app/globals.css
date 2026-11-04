@@ -1,6 +1,15 @@
 @import "tailwindcss";
 
 :root {
+  /* TeaPremium design tokens — storefront & admin use the same foundation. */
+  --tea-ivory: #f7f4ec;
+  --tea-paper: #fffcf6;
+  --tea-forest: #233b32;
+  --tea-charcoal: #202722;
+  --tea-clay: #925b3d;
+  --tea-gold: #b79b6c;
+  --tea-muted: #56635b;
+  --tea-line: #d9d2c3;
   --background: #f3efe6;
   --foreground: #1d2923;
   --muted: #66736c;

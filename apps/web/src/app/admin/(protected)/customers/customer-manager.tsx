@@ -36,6 +36,7 @@ export function CustomerManager({ data, canManage, search }: {
   const [notes, setNotes] = useState("");
   const [channel, setChannel] = useState("zalo_personal");
   const [interactionKind, setInteractionKind] = useState("note");
+  const [interactions, setInteractions] = useState<{ id: string; channel: string; kind: string; notes: string; occurredAtUtc: string }[]>([]);
 
   async function createCustomer(e: FormEvent) {
     e.preventDefault(); setBusy(true);
@@ -58,9 +59,19 @@ export function CustomerManager({ data, canManage, search }: {
       await adminRequest(`customers/${selected.id}/interactions`, {
         method: "POST", body: jsonBody({ channel, kind: interactionKind, notes }),
       });
-      toast.success("Đã lưu lịch sử tư vấn."); setNotes("");
+      toast.success("Đã lưu lịch sử tư vấn.");
+      const updated = await adminRequest<typeof interactions>(`customers/${selected.id}/interactions`);
+      setInteractions(updated); setNotes("");
     } catch (error) { toast.error(getErrorMessage(error)); }
     finally { setBusy(false); }
+  }
+
+  async function openCustomer(customer: Customer) {
+    setSelected(customer);
+    setInteractions([]);
+    try {
+      setInteractions(await adminRequest<typeof interactions>(`customers/${customer.id}/interactions`));
+    } catch (error) { toast.error(getErrorMessage(error)); }
   }
 
   function searchCustomers(e: FormEvent) {
@@ -68,22 +79,22 @@ export function CustomerManager({ data, canManage, search }: {
     router.push(`/admin/customers?search=${encodeURIComponent(query)}`);
   }
 
-  const field = "w-full min-h-10 rounded-lg border border-[#ddd8cc] bg-white px-3 py-2 text-sm";
+  const field = "admin-field";
   return <main className="space-y-6">
     <header className="admin-page-header">
       <div><p className="admin-eyebrow">CRM / khách hàng</p>
         <h1 className="admin-title">Khách hàng</h1>
         <p className="admin-description">{data.totalItems} hồ sơ. Theo dõi khách sỉ, khách bán lại và khách mua sử dụng.</p>
       </div>
-      {canManage && <Link href="/admin/customers/import" className="admin-link inline-flex min-h-10 items-center">Import CSV khách cũ</Link>}
+      {canManage && <Link href="/admin/customers/import" className="admin-secondary-button">Import CSV khách cũ</Link>}
     </header>
-    <form onSubmit={searchCustomers} className="flex flex-wrap gap-2">
+    <form onSubmit={searchCustomers} className="admin-panel flex flex-wrap gap-3 p-4">
       <input aria-label="Tìm tên hoặc số điện thoại" className={field + " sm:max-w-md"} value={query}
         onChange={e => setQuery(e.target.value)} placeholder="Tìm theo tên hoặc SĐT..." />
       <button type="submit" className="admin-primary-button rounded-lg px-5 py-2">Tìm kiếm</button>
     </form>
-    {canManage && <form onSubmit={createCustomer} className="admin-panel grid gap-3 p-5 sm:grid-cols-2">
-      <h2 className="text-lg font-semibold sm:col-span-2">Thêm khách hàng</h2>
+    {canManage && <form onSubmit={createCustomer} className="admin-panel grid gap-5 p-5 sm:grid-cols-2 sm:p-7">
+      <div className="sm:col-span-2"><h2 className="admin-card-heading">Tạo hồ sơ khách hàng</h2><p className="admin-field-note mt-2">Chỉ điền nguồn đã biết; nếu chưa xác minh, giữ trạng thái “Chưa xác định”.</p></div>
       <label className="text-sm">Tên khách <input className={field} required minLength={2} maxLength={200} value={name} onChange={e => setName(e.target.value)} /></label>
       <label className="text-sm">Điện thoại <input className={field} required value={phone} onChange={e => setPhone(e.target.value)} placeholder="09xxxxxxxx" /></label>
       <label className="text-sm">Nguồn ban đầu <select className={field} value={source} onChange={e => setSource(e.target.value)}>
@@ -102,17 +113,17 @@ export function CustomerManager({ data, canManage, search }: {
       </button>
     </form>}
     <div className="admin-panel overflow-x-auto">
-      <table className="w-full min-w-[650px] text-left text-sm">
+      <table className="admin-data-table min-w-[700px]">
         <thead><tr className="border-b border-[#ddd8cc]">
           <th className="px-4 py-3">Khách hàng</th><th className="px-4 py-3">Nguồn</th>
           <th className="px-4 py-3">Nhãn</th><th className="px-4 py-3">Lịch sử mua</th><th className="px-4 py-3">Thao tác</th>
         </tr></thead>
         <tbody>{data.items.map(c => <tr key={c.id} className="border-b border-[#eeeae1]">
           <td className="px-4 py-3"><strong>{c.name}</strong><p>{c.phone}</p></td>
-          <td className="px-4 py-3">{c.acquisitionSource}</td>
-          <td className="px-4 py-3">{c.tags.join(", ") || "—"}</td>
-          <td className="px-4 py-3">{c.hadPriorPurchase ? "Đã xác nhận" : "Chưa rõ"}</td>
-          <td className="px-4 py-3"><button className="admin-link" type="button" onClick={() => setSelected(c)}>Ghi chú tư vấn</button></td>
+          <td className="px-4 py-3">{sources.find(([code]) => code === c.acquisitionSource)?.[1] ?? c.acquisitionSource}</td>
+          <td className="px-4 py-3">{c.tags.length ? <span className="flex flex-wrap gap-1">{c.tags.map(tag => <span className="admin-tag" key={tag}>{tag}</span>)}</span> : "—"}</td>
+          <td className="px-4 py-3"><span className="admin-status">{c.hadPriorPurchase ? "Đã xác nhận" : "Chưa rõ"}</span></td>
+          <td className="px-4 py-3"><button className="admin-link" type="button" onClick={() => void openCustomer(c)}>Lịch sử tư vấn</button></td>
         </tr>)}</tbody>
       </table>
       {!data.items.length && <p className="p-5 text-sm">Không có khách phù hợp.</p>}
@@ -125,7 +136,8 @@ export function CustomerManager({ data, canManage, search }: {
       </div>
     </nav>}
     {canManage && selected && <form onSubmit={addInteraction} className="admin-panel space-y-3 p-5">
-      <h2 className="font-semibold">Ghi chú tư vấn: {selected.name}</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="admin-eyebrow">Hồ sơ tư vấn</p><h2 className="admin-card-heading mt-1">{selected.name}</h2><p className="admin-field-note mt-1">{selected.phone}</p></div><button type="button" className="admin-secondary-button" onClick={() => setSelected(null)}>Đóng</button></div>
+      <h3 className="text-sm font-semibold text-[#233b32]">Thêm trao đổi mới</h3>
       <div className="flex flex-wrap gap-2">
         <select className={field + " sm:max-w-xs"} aria-label="Kênh" value={channel} onChange={e => setChannel(e.target.value)}>
           <option value="zalo_personal">Zalo cá nhân</option><option value="zalo_oa">Zalo OA</option>
@@ -139,7 +151,13 @@ export function CustomerManager({ data, canManage, search }: {
       </div>
       <textarea className={field} rows={3} required maxLength={2000} value={notes}
         onChange={e => setNotes(e.target.value)} placeholder="Ghi nhu cầu, sản phẩm và kết quả tư vấn..." />
-      <button disabled={busy} type="submit" className="admin-primary-button rounded-lg px-5 py-2">Lưu ghi chú</button>
+      <button disabled={busy} type="submit" className="admin-primary-button">Lưu ghi chú</button>
+      <div className="border-t border-[#ddd8cc] pt-5"><h3 className="admin-card-heading">Lịch sử trao đổi</h3>
+        {interactions.length ? <ol className="mt-4 space-y-4">{interactions.map(item => <li key={item.id} className="border-l-2 border-[#b79b6c] bg-[#f7f4ec] p-4">
+          <p className="text-xs font-semibold text-[#925b3d]">{item.kind} · {item.channel} · {new Date(item.occurredAtUtc).toLocaleString("vi-VN")}</p>
+          <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-7 text-[#233b32]">{item.notes}</p>
+        </li>)}</ol> : <p className="mt-3 text-sm text-[#56635b]">Chưa có ghi chú tư vấn.</p>}
+      </div>
     </form>}
   </main>;
 }

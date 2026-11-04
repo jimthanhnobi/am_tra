@@ -29,9 +29,9 @@ export default async function ArticlesPage(props: Props) {
   const { page, result } = await read(props);
   return <main id="noi-dung" className={`${contentWidth} py-10 sm:py-14`}>
     <Breadcrumbs items={[{ name: "Trang chủ", path: "/" }, { name: "Kiến thức", path: "/kien-thuc" }]} />
-    <header className="mb-12 grid gap-7 border-b border-[#d9d2c3] pb-10 lg:grid-cols-[1fr_.7fr] lg:items-end">
+    <header className="sf-page-intro mb-12">
       <div><p className="sf-kicker">Góc đọc</p><h1 className="sf-heading mt-4">Kiến thức trà cụ{page > 1 ? ` — Trang ${page}` : ""}</h1></div>
-      <p className="sf-copy max-w-md">Những bài viết đã được biên tập và xuất bản trên website.</p>
+      <p className="sf-copy sf-page-intro-description">Góc đọc về trà cụ, cách chăm sóc và những câu chuyện bên chén trà. Chỉ những bài viết đã công bố mới hiển thị.</p>
     </header>
     {result.items.length ? <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:gap-7">{result.items.map((article) => <ArticleCard key={article.slug} article={article} />)}</div>
       : <div className="sf-empty"><h2 className="font-serif text-2xl text-[#233b32]">Chưa có bài viết được xuất bản</h2><p className="mt-4 text-sm leading-7 text-[#56635b]">Nội dung sẽ xuất hiện tại đây sau khi được công bố.</p></div>}

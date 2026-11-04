@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, BookOpenText, ClipboardList, FolderTree, Images,
-  Inbox, Package, Plus, ShoppingBag, Tags, Users, ChartNoAxesCombined } from "lucide-react";
+  Inbox, Package, Plus, ShoppingBag, Users, ChartNoAxesCombined } from "lucide-react";
 import { AccessDenied } from "@/components/admin/access-denied";
 import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";

@@ -34,11 +34,10 @@ export default async function CategoryPage(props: Props) {
   return <main id="noi-dung" className={`${contentWidth} py-10 sm:py-14`}>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd(site, crumbs)) }} />
     <Breadcrumbs items={crumbs} />
-    <header className="mb-12 border-b border-[#d9d2c3] pb-10 sm:mb-14 sm:pb-12">
-      <p className="sf-kicker">Bộ sưu tập</p>
-      <h1 className="sf-heading mt-4">{category.name}{page > 1 ? ` — Trang ${page}` : ""}</h1>
-      {category.descriptionHtml && <div className="sf-richtext mt-6 max-w-2xl text-base!" dangerouslySetInnerHTML={{ __html: category.descriptionHtml }} />}
-      <p className="mt-8 text-sm font-medium text-[#56635b]">{category.products.totalItems} sản phẩm được giới thiệu</p>
+    <header className="sf-page-intro mb-12">
+      <div><p className="sf-kicker">Bộ sưu tập / Trà cụ</p>
+      <h1 className="sf-heading mt-4">{category.name}{page > 1 ? ` — Trang ${page}` : ""}</h1><p className="mt-6 text-sm font-semibold text-[#925b3d]">{category.products.totalItems} sản phẩm đã công bố</p></div>
+      {category.descriptionHtml ? <div className="sf-richtext sf-page-intro-description text-base!" dangerouslySetInnerHTML={{ __html: category.descriptionHtml }} /> : <p className="sf-copy sf-page-intro-description">Khám phá những sản phẩm và thông tin đã được công bố trong bộ sưu tập này.</p>}
     </header>
     <ProductGrid products={category.products.items} />
     <Pagination data={category.products} path={`/danh-muc/${category.slug}`} />

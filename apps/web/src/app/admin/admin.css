@@ -1,11 +1,11 @@
 .admin-root {
-  --admin-bg: #f7f4ec;
-  --admin-panel: #fffefa;
-  --admin-forest: #233b32;
-  --admin-charcoal: #202722;
-  --admin-muted: #56635b;
-  --admin-clay: #925b3d;
-  --admin-line: #ddd8cc;
+  --admin-bg: var(--tea-ivory);
+  --admin-panel: var(--tea-paper);
+  --admin-forest: var(--tea-forest);
+  --admin-charcoal: var(--tea-charcoal);
+  --admin-muted: var(--tea-muted);
+  --admin-clay: var(--tea-clay);
+  --admin-line: var(--tea-line);
   min-height: 100vh;
   background: var(--admin-bg);
   color: var(--admin-charcoal);
@@ -62,14 +62,14 @@
 
 /* TeaPremium shared visual language: paper, forest, clay and subtle champagne. */
 .admin-root {
-  --admin-bg: #f7f4ec;
-  --admin-panel: #fffefa;
-  --admin-forest: #233b32;
-  --admin-charcoal: #202722;
-  --admin-muted: #56635b;
-  --admin-clay: #925b3d;
-  --admin-gold: #b79b6c;
-  --admin-line: #ddd8cc;
+  --admin-bg: var(--tea-ivory);
+  --admin-panel: var(--tea-paper);
+  --admin-forest: var(--tea-forest);
+  --admin-charcoal: var(--tea-charcoal);
+  --admin-muted: var(--tea-muted);
+  --admin-clay: var(--tea-clay);
+  --admin-gold: var(--tea-gold);
+  --admin-line: var(--tea-line);
 }
 .admin-root .admin-page-header { margin-bottom: 1.75rem; }
 .admin-root .admin-eyebrow { font-size: .68rem; letter-spacing: .2em; }

@@ -1,12 +1,12 @@
 .sf-site {
-  --sf-ivory: #f7f4ec;
-  --sf-paper: #fffcf6;
-  --sf-forest: #233b32;
-  --sf-charcoal: #202722;
-  --sf-clay: #71432a;
-  --sf-gold: #92794f;
-  --sf-muted: #56635b;
-  --sf-line: #d9d2c3;
+  --sf-ivory: var(--tea-ivory);
+  --sf-paper: var(--tea-paper);
+  --sf-forest: var(--tea-forest);
+  --sf-charcoal: var(--tea-charcoal);
+  --sf-clay: var(--tea-clay);
+  --sf-gold: var(--tea-gold);
+  --sf-muted: var(--tea-muted);
+  --sf-line: var(--tea-line);
   min-height: 100vh;
   background: var(--sf-ivory);
   color: var(--sf-charcoal);
@@ -97,14 +97,14 @@
 
 /* TeaPremium editorial system — storefront only. Real Catalog media, no stock assets. */
 .sf-site {
-  --sf-ivory: #f7f4ec;
-  --sf-paper: #fffcf6;
-  --sf-forest: #233b32;
-  --sf-charcoal: #202722;
-  --sf-clay: #925b3d;
-  --sf-gold: #b79b6c;
-  --sf-muted: #56635b;
-  --sf-line: #d9d2c3;
+  --sf-ivory: var(--tea-ivory);
+  --sf-paper: var(--tea-paper);
+  --sf-forest: var(--tea-forest);
+  --sf-charcoal: var(--tea-charcoal);
+  --sf-clay: var(--tea-clay);
+  --sf-gold: var(--tea-gold);
+  --sf-muted: var(--tea-muted);
+  --sf-line: var(--tea-line);
 }
 .sf-site::selection { background: var(--sf-forest); color: #fff; }
 .sf-header { position: sticky; top: 0; background: rgb(247 244 236 / .97); backdrop-filter: blur(12px); }
