@@ -163,12 +163,17 @@ internal sealed class CommerceStore(AppDbContext db) : ICommerceStore
                 UnknownCount = g.Count(x => x.IsReturning == null),
             }).FirstOrDefaultAsync(ct);
 
-        var channels = await query.GroupBy(x => x.ClosingChannel)
-            .Select(g => new ChannelMetric(g.Key, g.Count(), g.Sum(x => x.TotalAmount)))
+        var channelAggregates = await query.GroupBy(x => x.ClosingChannel)
+            .Select(g => new { Channel = g.Key, Orders = g.Count(), Revenue = g.Sum(x => x.TotalAmount) })
             .OrderByDescending(x => x.Revenue).ToListAsync(ct);
-        var sources = await query.GroupBy(x => x.AcquisitionSource)
-            .Select(g => new ChannelMetric(g.Key, g.Count(), g.Sum(x => x.TotalAmount)))
+        var channels = channelAggregates
+            .Select(x => new ChannelMetric(x.Channel, x.Orders, x.Revenue)).ToArray();
+
+        var sourceAggregates = await query.GroupBy(x => x.AcquisitionSource)
+            .Select(g => new { Channel = g.Key, Orders = g.Count(), Revenue = g.Sum(x => x.TotalAmount) })
             .OrderByDescending(x => x.Revenue).ToListAsync(ct);
+        var sources = sourceAggregates
+            .Select(x => new ChannelMetric(x.Channel, x.Orders, x.Revenue)).ToArray();
 
         var lines = db.SalesOrderItems.AsNoTracking().Where(x =>
             db.SalesOrders.Any(o => o.Id == x.SalesOrderId &&
