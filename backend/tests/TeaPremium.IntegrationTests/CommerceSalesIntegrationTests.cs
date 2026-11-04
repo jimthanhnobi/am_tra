@@ -16,6 +16,7 @@ public sealed class CommerceSalesIntegrationTests(PostgreSqlFixture database)
     [Fact]
     public async Task OrderIdempotencyCompletionAndUnknownHistoryReportingUsePostgreSql()
     {
+        ArgumentNullException.ThrowIfNull(database);
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(
             new Dictionary<string, string?>
             {
