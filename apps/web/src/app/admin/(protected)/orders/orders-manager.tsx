@@ -8,7 +8,7 @@ import { getErrorMessage } from "@/lib/admin-format";
 export type ProductOption = { id: string; name: string; sku: string | null };
 export type OrderDto = {
   id: string; orderCode: string; customerId: string; customerName: string;
-  closingChannel: string; acquisitionSource: string; isReturning: boolean;
+  closingChannel: string; acquisitionSource: string; isReturning: boolean | null;
   status: string; totalAmount: number; createdAtUtc: string;
 };
 export type OrderPage = { items: OrderDto[]; totalItems: number };
@@ -137,7 +137,7 @@ export function OrdersManager({ orders, products, canManage }: {
         </tr></thead>
         <tbody>{orders.items.map(o => <tr key={o.id} className="border-b border-[#eeeae1]">
           <td className="px-4 py-3 font-medium">{o.orderCode}</td>
-          <td className="px-4 py-3">{o.customerName}<p className="text-xs text-[#56635b]">{o.isReturning ? "Khách quay lại" : "Chưa xác minh mua trước"}</p></td>
+          <td className="px-4 py-3">{o.customerName}<p className="text-xs text-[#56635b]">{o.isReturning === true ? "Khách quay lại" : o.isReturning === false ? "Mua lần đầu" : "Chưa xác minh mua trước"}</p></td>
           <td className="px-4 py-3">{o.closingChannel}<p className="text-xs text-[#56635b]">{o.acquisitionSource}</p></td>
           <td className="px-4 py-3">{money(o.totalAmount)}</td>
           <td className="px-4 py-3">{o.status}

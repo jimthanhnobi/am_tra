@@ -108,9 +108,10 @@ internal sealed class CommerceStore(AppDbContext db) : ICommerceStore
         var lines = input.Items.Select(x =>
             new SalesOrderItem(x.ProductId, products[x.ProductId].Name, products[x.ProductId].Sku,
                 x.Quantity, x.UnitPrice, x.UnitCost)).ToArray();
-        var returning = customer.HadPriorPurchase ||
+        var hasConfirmedHistory = customer.HadPriorPurchase ||
             await db.SalesOrders.AnyAsync(x => x.CustomerId == customer.Id &&
                 x.Status == SalesOrderStatus.Completed, ct);
+        bool? returning = hasConfirmedHistory ? true : customer.Origin == "new" ? false : null;
         var order = new SalesOrder(customer.Id, input.RequestId, input.LeadId, input.ClosingChannel,
             customer.AcquisitionSource, returning, input.CampaignCode?.Trim(), lines);
         if (order.TotalAmount > 9999999999999999m)
@@ -158,7 +159,8 @@ internal sealed class CommerceStore(AppDbContext db) : ICommerceStore
             .Select(g => new
             {
                 Orders = g.Count(), Revenue = g.Sum(x => x.TotalAmount),
-                NewCount = g.Count(x => !x.IsReturning), ReturningCount = g.Count(x => x.IsReturning),
+                NewCount = g.Count(x => x.IsReturning == false), ReturningCount = g.Count(x => x.IsReturning == true),
+                UnknownCount = g.Count(x => x.IsReturning == null),
             }).FirstOrDefaultAsync(ct);
 
         var channels = await query.GroupBy(x => x.ClosingChannel)
@@ -176,7 +178,8 @@ internal sealed class CommerceStore(AppDbContext db) : ICommerceStore
             .SumAsync(x => (decimal?)((decimal)x.UnitCost! * x.Quantity), ct) ?? 0m;
         var missing = await lines.CountAsync(x => x.UnitCost == null, ct);
         return new SalesReport(summary?.Orders ?? 0, summary?.Revenue ?? 0m,
-            knownCost, missing, summary?.NewCount ?? 0, summary?.ReturningCount ?? 0, channels, sources);
+            knownCost, missing, summary?.NewCount ?? 0, summary?.ReturningCount ?? 0,
+            summary?.UnknownCount ?? 0, channels, sources);
     }
 
     private static bool SameRequest(SalesOrder existing, CreateOrderInput input)

@@ -53,7 +53,7 @@ public sealed partial class AddCommerceFoundation : Migration
             lead_id = t.Column<Guid>("uuid", nullable: true),
             closing_channel = t.Column<string>("character varying(30)", maxLength: 30, nullable: false),
             acquisition_source = t.Column<string>("character varying(40)", maxLength: 40, nullable: false),
-            is_returning = t.Column<bool>("boolean", nullable: false),
+            is_returning = t.Column<bool>("boolean", nullable: true),
             campaign_code = t.Column<string>("character varying(100)", maxLength: 100, nullable: true),
             status = t.Column<string>("character varying(20)", maxLength: 20, nullable: false),
             total_amount = t.Column<decimal>("numeric(18,2)", nullable: false),

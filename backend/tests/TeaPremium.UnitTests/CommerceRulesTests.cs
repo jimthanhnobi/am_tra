@@ -56,6 +56,15 @@ public sealed class CommerceRulesTests
     }
 
     [Fact]
+    public void UnknownImportedPurchaseHistoryRemainsUnclassified()
+    {
+        var item = new SalesOrderItem(Guid.NewGuid(), "Ấm thử", null, 1, 500000m, null);
+        var order = new SalesOrder(Guid.NewGuid(), Guid.NewGuid(), null,
+            "zalo_personal", "legacy_base", null, null, [item]);
+        Assert.Null(order.IsReturning);
+    }
+
+    [Fact]
     public void InvalidLineValuesAreRejected() =>
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             new SalesOrderItem(Guid.NewGuid(), "Ấm thử", null, 0, 200000m, null));

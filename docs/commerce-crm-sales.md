@@ -96,7 +96,7 @@ In the report: a completed order belongs to **one closing channel** and **one or
 These are independent *alternative breakdowns*, **not additive**. Unverified acquisition stays `unknown`.
 The report counts `CompletedAtUtc` in the half-open range `[from, to)`, not draft/confirmed orders.
 `KnownCost` excludes order lines without cost: `UnknownCostLines > 0` means gross profit is incomplete.
-Orders with earlier imported purchases can set `HadPriorPurchase=true`; this snapshot cannot infer true purchase history from contact alone.
+Orders with earlier imported purchases can set `HadPriorPurchase=true`. **Unknown purchase history is reported as a third category**: imported contacts with no verified prior purchases have nullable `is_returning` until a completed order establishes repeat history. They must not be automatically counted as first-time buyers.
 
 ## Import 400–500 existing contacts
 

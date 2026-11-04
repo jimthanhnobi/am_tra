@@ -6,7 +6,7 @@ import { AccessDenied } from "@/components/admin/access-denied";
 type ChannelMetric = { channel: string; orders: number; revenue: number };
 type SalesReport = {
   completedOrders: number; revenue: number; knownCost: number; unknownCostLines: number;
-  firstTimeOrders: number; returningOrders: number;
+  firstTimeOrders: number; returningOrders: number; unknownHistoryOrders: number;
   byClosingChannel: ChannelMetric[]; byAcquisitionSource: ChannelMetric[];
 };
 const money = (n: number) => n.toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + " ₫";
@@ -51,6 +51,7 @@ export default async function ReportsPage({
         ["Doanh thu đơn hoàn tất", money(report.revenue)],
         ["Đơn khách mua lần đầu", String(report.firstTimeOrders)],
         ["Đơn khách quay lại", String(report.returningOrders)],
+        ["Chưa rõ lịch sử mua", String(report.unknownHistoryOrders)],
       ].map(([label, value]) => <section className="admin-panel p-5" key={label}>
         <p className="text-sm text-[#56635b]">{label}</p><p className="mt-2 text-xl font-semibold">{value}</p>
       </section>)}

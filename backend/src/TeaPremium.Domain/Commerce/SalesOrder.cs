@@ -8,7 +8,7 @@ public sealed class SalesOrder
     private SalesOrder() { }
 
     public SalesOrder(Guid customerId, Guid requestId, Guid? leadId, string closingChannel,
-        string acquisitionSource, bool isReturning, string? campaignCode,
+        string acquisitionSource, bool? isReturning, string? campaignCode,
         IReadOnlyCollection<SalesOrderItem> items)
     {
         if (items.Count is 0 or > 50) throw new ArgumentException("Order items count must be 1-50.");
@@ -35,7 +35,7 @@ public sealed class SalesOrder
     public Guid? LeadId { get; private set; }
     public string ClosingChannel { get; private set; } = "";
     public string AcquisitionSource { get; private set; } = "";
-    public bool IsReturning { get; private set; }
+    public bool? IsReturning { get; private set; }
     public string? CampaignCode { get; private set; }
     public SalesOrderStatus Status { get; private set; }
     public decimal TotalAmount { get; private set; }

@@ -17,13 +17,13 @@ public sealed record CreateOrderInput(Guid CustomerId, Guid RequestId, Guid? Lea
 public sealed record OrderItemDto(Guid ProductId, string ProductName, string? Sku,
     int Quantity, decimal UnitPrice, decimal? UnitCost, decimal LineAmount);
 public sealed record OrderDto(Guid Id, string OrderCode, Guid CustomerId, string CustomerName,
-    Guid? LeadId, string ClosingChannel, string AcquisitionSource, bool IsReturning,
+    Guid? LeadId, string ClosingChannel, string AcquisitionSource, bool? IsReturning,
     string? CampaignCode, string Status, decimal TotalAmount, DateTimeOffset CreatedAtUtc,
     DateTimeOffset? CompletedAtUtc, IReadOnlyList<OrderItemDto> Items);
 public sealed record OrderPage(IReadOnlyList<OrderDto> Items, int Page, int PageSize, int TotalItems);
 public sealed record ChannelMetric(string Channel, int Orders, decimal Revenue);
 public sealed record SalesReport(int CompletedOrders, decimal Revenue, decimal KnownCost,
-    int UnknownCostLines, int FirstTimeOrders, int ReturningOrders,
+    int UnknownCostLines, int FirstTimeOrders, int ReturningOrders, int UnknownHistoryOrders,
     IReadOnlyList<ChannelMetric> ByClosingChannel, IReadOnlyList<ChannelMetric> ByAcquisitionSource);
 
 public interface ICommerceStore

@@ -61,7 +61,7 @@ namespace TeaPremium.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("LeadId").HasColumnType("uuid").HasColumnName("lead_id");
                     b.Property<string>("ClosingChannel").IsRequired().HasMaxLength(30).HasColumnType("character varying(30)").HasColumnName("closing_channel");
                     b.Property<string>("AcquisitionSource").IsRequired().HasMaxLength(40).HasColumnType("character varying(40)").HasColumnName("acquisition_source");
-                    b.Property<bool>("IsReturning").HasColumnType("boolean").HasColumnName("is_returning");
+                    b.Property<bool?>("IsReturning").HasColumnType("boolean").HasColumnName("is_returning");
                     b.Property<string>("CampaignCode").HasMaxLength(100).HasColumnType("character varying(100)").HasColumnName("campaign_code");
                     b.Property<TeaPremium.Domain.Commerce.SalesOrderStatus>("Status").HasConversion<string>().HasMaxLength(20).HasColumnType("character varying(20)").HasColumnName("status");
                     b.Property<decimal>("TotalAmount").HasPrecision(18, 2).HasColumnType("numeric(18,2)").HasColumnName("total_amount");

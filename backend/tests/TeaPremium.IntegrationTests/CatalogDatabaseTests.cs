@@ -35,6 +35,8 @@ public sealed class CatalogDatabaseTests(PostgreSqlFixture database)
             "brands",
             "categories",
             "contact_events",
+            "customer_interactions",
+            "customers",
             "identity_role_claims",
             "identity_roles",
             "identity_user_claims",
@@ -48,6 +50,8 @@ public sealed class CatalogDatabaseTests(PostgreSqlFixture database)
             "product_categories",
             "product_media",
             "products",
+            "sales_order_items",
+            "sales_orders",
             "seo_redirects",
             "site_settings",
         ];
@@ -72,6 +76,10 @@ public sealed class CatalogDatabaseTests(PostgreSqlFixture database)
         Assert.Contains("ux_article_categories_slug", indexes);
         Assert.Contains("ux_contact_events_client_event_id", indexes);
         Assert.Contains("ux_seo_redirects_source_path", indexes);
+        Assert.Contains("ux_customers_normalized_phone", indexes);
+        Assert.Contains("ix_customer_interactions_customer_time", indexes);
+        Assert.Contains("ux_sales_orders_request_id", indexes);
+        Assert.Contains("ix_sales_orders_completed", indexes);
     }
 
     [Fact]
