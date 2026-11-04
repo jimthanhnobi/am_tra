@@ -109,8 +109,9 @@ Orders with earlier imported purchases can set `HadPriorPurchase=true`; this sna
 
 ## Admin usage
 
-- `/admin/customers`: manually create and search customers; use the import API with `dryRun` for batch operations.
-- `/admin/orders`: enter confirmed orders from calls, OA, or personal Zalo.
+- `/admin/customers`: manually create/search customers, page through customers, and record consultation notes.
+- `/admin/customers/import`: import UTF-8 CSV from Excel, preview with `dryRun=true`, then explicitly confirm. Only `name,phone` (or `ten,sdt`) columns are required. Phone duplicates are skipped, not overwritten.
+- `/admin/orders`: enter confirmed orders from calls, OA, or personal Zalo. The initial form records one product per order; API accepts 1–50 lines.
 - `/admin/reports`: reporting by **closing channel** and **acquisition source**, with completed order totals.
 
 Use `zalo_personal` for personal Zalo, `zalo_oa` for OA, and `website` only when the purchase is actually confirmed on the website. A website lead that ends in OA stays an OA closing-channel order.
@@ -143,3 +144,12 @@ corepack pnpm --dir apps/web build
 Use an isolated database and run the reviewed EF migration manually.
 Test the same `requestId` twice, duplicate import, unauthenticated and CSRF failure, different closing/source assignments, customer returning flag, cancelled/confirmed/completed report inclusion, zero/unknown costs and date boundaries.
 Do not claim tests have passed unless observed in CI or local runs.
+
+## Known MVP limitations and next iterations
+
+- Public storefront continues to have no checkout or customer-login functionality.
+- CRM import is CSV, not an XLSX file reader; Excel users should export UTF-8 CSV with comma separators.
+- Customers are paginated in the Admin. The create-order product selector currently loads the first 50 Published products; product search and multi-line order editing are follow-ups.
+- Existing Leads remain web-form leads; personal-Zalo consultations are recorded as customer interaction notes, not treated as website leads. Explicit lead/customer linking and lead-to-order conversion should be added when validated by real usage.
+- Marketing opt-in/opt-out collection and verified OA UID association are separate follow-up modules; **do not send bulk outreach based solely on imported phone numbers**.
+- Import rows receive the selected cohort tag. Confirmed historical purchases are not inferred during CSV import.

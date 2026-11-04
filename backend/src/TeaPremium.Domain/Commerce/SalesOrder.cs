@@ -1,3 +1,4 @@
+using System.Globalization;
 namespace TeaPremium.Domain.Commerce;
 
 public enum SalesOrderStatus { Confirmed, Completed, Cancelled }
@@ -12,7 +13,7 @@ public sealed class SalesOrder
     {
         if (items.Count is 0 or > 50) throw new ArgumentException("Order items count must be 1-50.");
         Id = Guid.NewGuid();
-        OrderCode = "TP-" + DateTimeOffset.UtcNow.ToString("yyyyMMdd") + "-" +
+        OrderCode = "TP-" + DateTimeOffset.UtcNow.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + "-" +
             Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
         RequestId = requestId;
         CustomerId = customerId;

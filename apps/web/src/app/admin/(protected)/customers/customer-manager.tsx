@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { adminRequest, jsonBody } from "@/lib/api/client";
@@ -74,6 +75,7 @@ export function CustomerManager({ data, canManage, search }: {
         <h1 className="admin-title">Khách hàng</h1>
         <p className="admin-description">{data.totalItems} hồ sơ. Theo dõi khách sỉ, khách bán lại và khách mua sử dụng.</p>
       </div>
+      {canManage && <Link href="/admin/customers/import" className="admin-link inline-flex min-h-10 items-center">Import CSV khách cũ</Link>}
     </header>
     <form onSubmit={searchCustomers} className="flex flex-wrap gap-2">
       <input aria-label="Tìm tên hoặc số điện thoại" className={field + " sm:max-w-md"} value={query}
@@ -115,6 +117,13 @@ export function CustomerManager({ data, canManage, search }: {
       </table>
       {!data.items.length && <p className="p-5 text-sm">Không có khách phù hợp.</p>}
     </div>
+    {data.totalItems > data.pageSize && <nav className="flex items-center justify-between text-sm" aria-label="Phân trang khách hàng">
+      <span>Trang {data.page}/{Math.ceil(data.totalItems / data.pageSize)}</span>
+      <div className="flex gap-3">
+        {data.page > 1 && <Link className="admin-link" href={`/admin/customers?page=${data.page - 1}&search=${encodeURIComponent(search)}`}>Trước</Link>}
+        {data.page * data.pageSize < data.totalItems && <Link className="admin-link" href={`/admin/customers?page=${data.page + 1}&search=${encodeURIComponent(search)}`}>Tiếp</Link>}
+      </div>
+    </nav>}
     {canManage && selected && <form onSubmit={addInteraction} className="admin-panel space-y-3 p-5">
       <h2 className="font-semibold">Ghi chú tư vấn: {selected.name}</h2>
       <div className="flex flex-wrap gap-2">

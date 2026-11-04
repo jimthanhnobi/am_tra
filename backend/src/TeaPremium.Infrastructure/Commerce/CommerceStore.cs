@@ -84,8 +84,8 @@ internal sealed class CommerceStore(AppDbContext db) : ICommerceStore
             .FirstOrDefaultAsync(x => x.RequestId == input.RequestId, ct);
         if (previous is not null)
         {
-            if (previous.CustomerId != input.CustomerId)
-                throw new CommerceConflictException("Request ID belongs to another customer.");
+            if (!SameRequest(previous, input))
+                throw new CommerceConflictException("Request ID was reused with different order data.");
             return previous;
         }
 
@@ -120,9 +120,11 @@ internal sealed class CommerceStore(AppDbContext db) : ICommerceStore
         catch (DbUpdateException e) when (IsUniqueViolation(e))
         {
             db.Entry(order).State = EntityState.Detached;
-            return await db.SalesOrders.AsNoTracking().Include(x => x.Items)
-                .FirstOrDefaultAsync(x => x.RequestId == input.RequestId, ct)
-                ?? throw new CommerceConflictException("Duplicate order code. Retry with a new request ID.");
+            var concurrent = await db.SalesOrders.AsNoTracking().Include(x => x.Items)
+                .FirstOrDefaultAsync(x => x.RequestId == input.RequestId, ct);
+            if (concurrent is null || !SameRequest(concurrent, input))
+                throw new CommerceConflictException("Order conflict. Retry with a new request ID.");
+            return concurrent;
         }
         return order;
     }
@@ -175,6 +177,28 @@ internal sealed class CommerceStore(AppDbContext db) : ICommerceStore
         var missing = await lines.CountAsync(x => x.UnitCost == null, ct);
         return new SalesReport(summary?.Orders ?? 0, summary?.Revenue ?? 0m,
             knownCost, missing, summary?.NewCount ?? 0, summary?.ReturningCount ?? 0, channels, sources);
+    }
+
+    private static bool SameRequest(SalesOrder existing, CreateOrderInput input)
+    {
+        if (existing.CustomerId != input.CustomerId ||
+            existing.LeadId != input.LeadId ||
+            existing.ClosingChannel != input.ClosingChannel ||
+            existing.CampaignCode != input.CampaignCode?.Trim() ||
+            existing.Items.Count != input.Items.Count) return false;
+
+        var previous = existing.Items.OrderBy(x => x.ProductId).ThenBy(x => x.Quantity)
+            .ThenBy(x => x.UnitPrice).ThenBy(x => x.UnitCost).ToArray();
+        var incoming = input.Items.OrderBy(x => x.ProductId).ThenBy(x => x.Quantity)
+            .ThenBy(x => x.UnitPrice).ThenBy(x => x.UnitCost).ToArray();
+        for (var i = 0; i < previous.Length; i++)
+        {
+            if (previous[i].ProductId != incoming[i].ProductId ||
+                previous[i].Quantity != incoming[i].Quantity ||
+                previous[i].UnitPrice != incoming[i].UnitPrice ||
+                previous[i].UnitCost != incoming[i].UnitCost) return false;
+        }
+        return true;
     }
 
     private static bool IsUniqueViolation(DbUpdateException error) =>
