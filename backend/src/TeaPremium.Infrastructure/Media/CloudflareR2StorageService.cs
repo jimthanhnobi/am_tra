@@ -109,6 +109,7 @@ internal sealed class CloudflareR2StorageService(
     }
 
     public string GetPublicUrl(string objectKey) =>
+        DemoMediaPath.Resolve(objectKey) ??
         $"{options.PublicBaseUrl.TrimEnd('/')}/{string.Join('/', objectKey.Split('/').Select(Uri.EscapeDataString))}";
 }
 

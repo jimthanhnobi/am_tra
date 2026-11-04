@@ -29,7 +29,7 @@ internal sealed class UnavailableObjectStorageService : IObjectStorageService
         CancellationToken cancellationToken) =>
         Task.FromException(NotConfigured());
 
-    public string? GetPublicUrl(string objectKey) => null;
+    public string? GetPublicUrl(string objectKey) => DemoMediaPath.Resolve(objectKey);
 
     private static MediaStorageUnavailableException NotConfigured() =>
         new("Object storage is not configured for this environment.");

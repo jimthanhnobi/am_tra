@@ -183,6 +183,23 @@ Storefront tại `http://localhost:3000` dùng Public API thật và SSR. Các t
 
 CMS bài viết `/kien-thuc` và form liên hệ/lead đã có trong Prompt 6. Sau khi chạy migration, xem [hướng dẫn CMS và Lead](docs/content-leads.md) để thử Tiptap, Publish, consent, CORS và cấu hình GA4 thật nếu dùng.
 
+## Dữ liệu mẫu hình ảnh / CRM / báo cáo (Development)
+
+Có lệnh opt-in `seed-demo-showcase` để tạo bộ dữ liệu minh họa: 7 sản phẩm/5 danh mục,
+9 ảnh SVG riêng, 3 bài viết, 8 hồ sơ khách, 9 đơn và 4 lead; ảnh vẫn hiển thị
+khi R2 chưa sẵn sàng. Seed không tự chạy lúc startup, không sửa Production và chạy lại
+không tạo trùng. Sau khi migrate và bootstrap Admin, chạy trên local Compose:
+
+```powershell
+docker compose --env-file .env -f infra/docker/compose.yml exec -e TEAPREMIUM_DEMO_SEED_CONFIRM=local-demo-only api dotnet TeaPremium.Api.dll seed-demo-showcase
+```
+
+**Quan trọng:** chỉ chạy với `.env` trỏ PostgreSQL local và `ASPNETCORE_ENVIRONMENT=Development`.
+Đây là dữ liệu giả, không dùng để gửi Zalo, đo doanh số thật hoặc publish SEO.
+Hướng dẫn chi tiết: [docs/demo-showcase-seed.md](docs/demo-showcase-seed.md).
+Ảnh SVG được dựng riêng và có watermark demo, không sao chép từ nguồn tham khảo
+[IdeaToCodee/runway](https://github.com/IdeaToCodee/runway).
+
 ## Build và test
 
 ```powershell

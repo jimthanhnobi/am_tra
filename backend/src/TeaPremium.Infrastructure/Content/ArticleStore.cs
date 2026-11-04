@@ -5,6 +5,7 @@ using TeaPremium.Application.Content;
 using TeaPremium.Domain.Catalog;
 using TeaPremium.Domain.Content;
 using TeaPremium.Infrastructure.Persistence;
+using TeaPremium.Infrastructure.Media;
 
 namespace TeaPremium.Infrastructure.Content;
 
@@ -114,6 +115,7 @@ internal sealed class ArticleStore(AppDbContext db, IConfiguration configuration
 
     private string? CoverUrl(string? key)
     {
+        if (key is not null && DemoMediaPath.Resolve(key) is { } bundledUrl) return bundledUrl;
         var baseUrl = configuration["R2_PUBLIC_BASE_URL"]?.TrimEnd('/');
         return key is null || string.IsNullOrWhiteSpace(baseUrl) ? null :
             $"{baseUrl}/{string.Join('/', key.Split('/').Select(Uri.EscapeDataString))}";

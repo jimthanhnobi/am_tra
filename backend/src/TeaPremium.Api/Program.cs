@@ -5,6 +5,10 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using TeaPremium.Api.Seeding;
+using TeaPremium.Infrastructure.Persistence;
 using TeaPremium.Api.Configuration;
 using TeaPremium.Api.Extensions;
 using TeaPremium.Api.HealthChecks;
@@ -90,6 +94,30 @@ if (args.Any(argument => string.Equals(argument, "seed-demo-article", StringComp
         await articles.TransitionAsync(created.Id, "review", CancellationToken.None);
         await articles.TransitionAsync(created.Id, "publish", CancellationToken.None);
     }
+    return;
+}
+
+if (args.Any(argument => string.Equals(argument, "seed-demo-showcase", StringComparison.OrdinalIgnoreCase)))
+{
+    if (!app.Environment.IsDevelopment() ||
+        !string.Equals(Environment.GetEnvironmentVariable("TEAPREMIUM_DEMO_SEED_CONFIRM"),
+            "local-demo-only", StringComparison.Ordinal))
+        throw new InvalidOperationException(
+            "Demo seed is Development-only and requires TEAPREMIUM_DEMO_SEED_CONFIRM=local-demo-only.");
+
+    await using var scope = app.Services.CreateAsyncScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var settings = new NpgsqlConnectionStringBuilder(db.Database.GetConnectionString());
+    if (settings.Host is not ("localhost" or "127.0.0.1" or "postgres") ||
+        (settings.Database != "teapremium" &&
+            !settings.Database.StartsWith("teapremium_demo", StringComparison.OrdinalIgnoreCase)))
+        throw new InvalidOperationException("Demo seed requires a local teapremium/teapremium_demo PostgreSQL database.");
+
+    var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var admin = (await users.GetUsersInRoleAsync(AdminRoles.Admin)).FirstOrDefault()
+        ?? throw new InvalidOperationException("Run bootstrap-admin before seed-demo-showcase.");
+    var result = await DemoShowcaseSeeder.SeedAsync(db, admin.Id, CancellationToken.None);
+    Console.WriteLine(result);
     return;
 }
 

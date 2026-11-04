@@ -5,10 +5,11 @@ import { apiConfig } from "@/lib/api/config";
 
 const slug = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(200);
 const httpUrl = z.string().url().refine((value) => /^https?:\/\//.test(value));
-const cover = { coverUrl: httpUrl.nullable(), coverWidth: z.number().int().positive().nullable(), coverHeight: z.number().int().positive().nullable() };
+const imageUrl = z.union([httpUrl, z.string().regex(/^\/demo-products\/[a-z0-9-]+\.svg$/)]);
+const cover = { coverUrl: imageUrl.nullable(), coverWidth: z.number().int().positive().nullable(), coverHeight: z.number().int().positive().nullable() };
 const summary = z.object({ slug, title: z.string(), excerpt: z.string(), publishedAt: z.string(), ...cover });
 const seo = z.object({ seoTitle: z.string().nullable(), metaDescription: z.string().nullable(), canonicalOverride: httpUrl.nullable(), robotsIndex: z.boolean(), ogTitle: z.string().nullable(), ogDescription: z.string().nullable(), ogImageAssetId: z.string().nullable().default(null) });
-const detail = summary.extend({ contentHtml: z.string(), updatedAtUtc: z.string(), seo, categories: z.array(z.object({ slug, name: z.string() })), ogImageUrl: httpUrl.nullable().default(null), ogImageWidth: z.number().int().positive().nullable().default(null), ogImageHeight: z.number().int().positive().nullable().default(null) });
+const detail = summary.extend({ contentHtml: z.string(), updatedAtUtc: z.string(), seo, categories: z.array(z.object({ slug, name: z.string() })), ogImageUrl: imageUrl.nullable().default(null), ogImageWidth: z.number().int().positive().nullable().default(null), ogImageHeight: z.number().int().positive().nullable().default(null) });
 const page = z.object({ items: z.array(summary), page: z.number().int().positive(), pageSize: z.number().int().positive(), totalItems: z.number().int().nonnegative(), totalPages: z.number().int().nonnegative() });
 
 async function request(path: string) {

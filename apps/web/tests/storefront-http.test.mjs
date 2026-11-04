@@ -132,6 +132,14 @@ test("production storefront HTTP contract", { timeout: 180_000 }, async (t) => {
       assert.match(contact, /Ấm API thử nghiệm/);
       assert.match(contact, /Tôi muốn được tư vấn sản phẩm/);
     });
+    await t.test("bundled demo art is served locally without R2 and visibly marked as demo", async () => {
+      const response = await fetch(origin + "/demo-products/am-tu-sa-tay-thi.svg");
+      assert.equal(response.status, 200);
+      assert.match(response.headers.get("content-type") || "", /image\/svg\+xml/);
+      const svg = await response.text();
+      assert.match(svg, /DEMO ILLUSTRATION/);
+      assert.match(svg, /<svg/);
+    });
     await t.test("public product has server HTML, metadata, gallery, contact and honest JSON-LD", async () => {
       const html = await get("/san-pham/am-public");
       assert.match(html, /<h1[^>]*>Ấm API thử nghiệm<\/h1>/);

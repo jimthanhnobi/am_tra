@@ -7,7 +7,8 @@ import type { PublicCategoryNode } from "@/lib/api/public-types";
 // Zod strips unlisted fields: never pass an upstream object wholesale to the UI.
 const slug = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(200);
 const httpUrl = z.string().url().refine((value) => /^https?:\/\//.test(value));
-const image = z.object({ assetId: z.string(), publicUrl: httpUrl.nullable(), width: z.number().int().positive(), height: z.number().int().positive(), altText: z.string(), sortOrder: z.number().int(), isCover: z.boolean() });
+const imageUrl = z.union([httpUrl, z.string().regex(/^\/demo-products\/[a-z0-9-]+\.svg$/)]);
+const image = z.object({ assetId: z.string(), publicUrl: imageUrl.nullable(), width: z.number().int().positive(), height: z.number().int().positive(), altText: z.string(), sortOrder: z.number().int(), isCover: z.boolean() });
 const categorySummary = z.object({ slug, name: z.string() });
 const brand = z.object({ name: z.string(), slug, origin: z.string().nullable() });
 const seo = z.object({ seoTitle: z.string().nullable(), metaDescription: z.string().nullable(), canonicalOverride: httpUrl.nullable(), robotsIndex: z.boolean(), ogTitle: z.string().nullable(), ogDescription: z.string().nullable(), ogImageAssetId: z.string().nullable() });
