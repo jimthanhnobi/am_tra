@@ -147,13 +147,13 @@ internal sealed class CommerceStore(AppDbContext db) : ICommerceStore
     public async Task<string> GetCustomerNameAsync(Guid id, CancellationToken ct) =>
         await db.Customers.Where(x => x.Id == id).Select(x => x.Name).FirstAsync(ct);
 
-    public async Task<SalesReport> GetSalesReportAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct)
+    public async Task<SalesReport> GetSalesReportAsync(DateTimeOffset from, DateTimeOffset untilUtc, CancellationToken ct)
     {
         // The sale is attributed once to the closing channel and once to the acquisition source
         // in separate breakdowns. Never sum those breakdowns together.
         var query = db.SalesOrders.AsNoTracking().Where(x =>
             x.Status == SalesOrderStatus.Completed &&
-            x.CompletedAtUtc >= from && x.CompletedAtUtc < to);
+            x.CompletedAtUtc >= from && x.CompletedAtUtc < untilUtc);
         var summary = await query.GroupBy(_ => 1)
             .Select(g => new
             {
@@ -171,7 +171,7 @@ internal sealed class CommerceStore(AppDbContext db) : ICommerceStore
         var lines = db.SalesOrderItems.AsNoTracking().Where(x =>
             db.SalesOrders.Any(o => o.Id == x.SalesOrderId &&
                 o.Status == SalesOrderStatus.Completed &&
-                o.CompletedAtUtc >= from && o.CompletedAtUtc < to));
+                o.CompletedAtUtc >= from && o.CompletedAtUtc < untilUtc));
         var knownCost = await lines.Where(x => x.UnitCost != null)
             .SumAsync(x => (decimal?)((decimal)x.UnitCost! * x.Quantity), ct) ?? 0m;
         var missing = await lines.CountAsync(x => x.UnitCost == null, ct);

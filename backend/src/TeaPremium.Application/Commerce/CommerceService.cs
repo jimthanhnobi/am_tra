@@ -40,7 +40,7 @@ public interface ICommerceStore
     Task<(IReadOnlyList<SalesOrder> Items, int Count)> ListOrdersAsync(int skip, int take, CancellationToken ct);
     Task<SalesOrder?> FindOrderAsync(Guid id, CancellationToken ct);
     Task SaveOrderAsync(CancellationToken ct);
-    Task<SalesReport> GetSalesReportAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct);
+    Task<SalesReport> GetSalesReportAsync(DateTimeOffset from, DateTimeOffset untilUtc, CancellationToken ct);
     Task<string> GetCustomerNameAsync(Guid id, CancellationToken ct);
 }
 
@@ -62,7 +62,7 @@ public sealed class CommerceService(ICommerceStore store)
     {
         var raw = (phone ?? "").Trim();
         var compact = new string(raw.Where(char.IsDigit).ToArray());
-        if (compact.Length == 10 && compact.StartsWith("0", StringComparison.Ordinal))
+        if (compact.Length == 10 && compact.StartsWith('0'))
             return "+84" + compact[1..];
         if (compact.Length == 11 && compact.StartsWith("84", StringComparison.Ordinal))
             return "+" + compact;

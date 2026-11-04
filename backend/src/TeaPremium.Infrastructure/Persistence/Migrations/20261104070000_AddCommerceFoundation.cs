@@ -9,7 +9,7 @@ namespace TeaPremium.Infrastructure.Persistence.Migrations;
 
 [DbContext(typeof(AppDbContext))]
 [Migration("20261104070000_AddCommerceFoundation")]
-public sealed class AddCommerceFoundation : Migration
+public sealed partial class AddCommerceFoundation : Migration
 {
     protected override void Up(MigrationBuilder m)
     {
