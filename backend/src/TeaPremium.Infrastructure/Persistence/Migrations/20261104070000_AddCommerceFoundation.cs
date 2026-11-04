@@ -11,9 +11,9 @@ namespace TeaPremium.Infrastructure.Persistence.Migrations;
 [Migration("20261104070000_AddCommerceFoundation")]
 public sealed partial class AddCommerceFoundation : Migration
 {
-    protected override void Up(MigrationBuilder m)
+    protected override void Up(MigrationBuilder migrationBuilder)
     {
-        m.CreateTable("customers", t => new
+        migrationBuilder.CreateTable("customers", t => new
         {
             id = t.Column<Guid>("uuid", nullable: false),
             name = t.Column<string>("character varying(200)", maxLength: 200, nullable: false),
@@ -25,10 +25,10 @@ public sealed partial class AddCommerceFoundation : Migration
             tags = t.Column<string[]>("text[]", nullable: false),
             created_at_utc = t.Column<DateTimeOffset>("timestamp with time zone", nullable: false)
         }, constraints: t => t.PrimaryKey("pk_customers", x => x.id));
-        m.CreateIndex("ux_customers_normalized_phone", "customers", "normalized_phone", unique: true);
-        m.CreateIndex("ix_customers_created_at_utc", "customers", "created_at_utc");
+        migrationBuilder.CreateIndex("ux_customers_normalized_phone", "customers", "normalized_phone", unique: true);
+        migrationBuilder.CreateIndex("ix_customers_created_at_utc", "customers", "created_at_utc");
 
-        m.CreateTable("customer_interactions", t => new
+        migrationBuilder.CreateTable("customer_interactions", t => new
         {
             id = t.Column<Guid>("uuid", nullable: false),
             customer_id = t.Column<Guid>("uuid", nullable: false),
@@ -41,10 +41,10 @@ public sealed partial class AddCommerceFoundation : Migration
             t.PrimaryKey("pk_customer_interactions", x => x.id);
             t.ForeignKey("fk_interactions_customers", x => x.customer_id, "customers", "id", onDelete: ReferentialAction.Restrict);
         });
-        m.CreateIndex("ix_customer_interactions_customer_time", "customer_interactions",
+        migrationBuilder.CreateIndex("ix_customer_interactions_customer_time", "customer_interactions",
             new[] { "customer_id", "occurred_at_utc" });
 
-        m.CreateTable("sales_orders", t => new
+        migrationBuilder.CreateTable("sales_orders", t => new
         {
             id = t.Column<Guid>("uuid", nullable: false),
             order_code = t.Column<string>("character varying(32)", maxLength: 32, nullable: false),
@@ -65,13 +65,13 @@ public sealed partial class AddCommerceFoundation : Migration
             t.ForeignKey("fk_sales_orders_customers", x => x.customer_id, "customers", "id", onDelete: ReferentialAction.Restrict);
             t.ForeignKey("fk_sales_orders_leads", x => x.lead_id, "leads", "id", onDelete: ReferentialAction.Restrict);
         });
-        m.CreateIndex("ix_sales_orders_lead_id", "sales_orders", "lead_id");
-        m.CreateIndex("ux_sales_orders_order_code", "sales_orders", "order_code", unique: true);
-        m.CreateIndex("ux_sales_orders_request_id", "sales_orders", "request_id", unique: true);
-        m.CreateIndex("ix_sales_orders_customer_time", "sales_orders", new[] { "customer_id", "created_at_utc" });
-        m.CreateIndex("ix_sales_orders_completed", "sales_orders", new[] { "status", "completed_at_utc" });
+        migrationBuilder.CreateIndex("ix_sales_orders_lead_id", "sales_orders", "lead_id");
+        migrationBuilder.CreateIndex("ux_sales_orders_order_code", "sales_orders", "order_code", unique: true);
+        migrationBuilder.CreateIndex("ux_sales_orders_request_id", "sales_orders", "request_id", unique: true);
+        migrationBuilder.CreateIndex("ix_sales_orders_customer_time", "sales_orders", new[] { "customer_id", "created_at_utc" });
+        migrationBuilder.CreateIndex("ix_sales_orders_completed", "sales_orders", new[] { "status", "completed_at_utc" });
 
-        m.CreateTable("sales_order_items", t => new
+        migrationBuilder.CreateTable("sales_order_items", t => new
         {
             id = t.Column<Guid>("uuid", nullable: false),
             sales_order_id = t.Column<Guid>("uuid", nullable: false),
@@ -87,15 +87,15 @@ public sealed partial class AddCommerceFoundation : Migration
             t.ForeignKey("fk_sales_order_items_orders", x => x.sales_order_id, "sales_orders", "id", onDelete: ReferentialAction.Cascade);
             t.ForeignKey("fk_sales_order_items_products", x => x.product_id, "products", "id", onDelete: ReferentialAction.Restrict);
         });
-        m.CreateIndex("ix_sales_order_items_sales_order_id", "sales_order_items", "sales_order_id");
-        m.CreateIndex("ix_sales_order_items_product_id", "sales_order_items", "product_id");
+        migrationBuilder.CreateIndex("ix_sales_order_items_sales_order_id", "sales_order_items", "sales_order_id");
+        migrationBuilder.CreateIndex("ix_sales_order_items_product_id", "sales_order_items", "product_id");
     }
 
-    protected override void Down(MigrationBuilder m)
+    protected override void Down(MigrationBuilder migrationBuilder)
     {
-        m.DropTable("customer_interactions");
-        m.DropTable("sales_order_items");
-        m.DropTable("sales_orders");
-        m.DropTable("customers");
+        migrationBuilder.DropTable("customer_interactions");
+        migrationBuilder.DropTable("sales_order_items");
+        migrationBuilder.DropTable("sales_orders");
+        migrationBuilder.DropTable("customers");
     }
 }
