@@ -1829,7 +1829,6 @@ namespace TeaPremium.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_sales_orders_leads");
 
-                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("TeaPremium.Domain.Commerce.SalesOrderItem", b =>
@@ -1847,6 +1846,11 @@ namespace TeaPremium.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_sales_order_items_products");
+                });
+
+            modelBuilder.Entity("TeaPremium.Domain.Commerce.SalesOrder", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("TeaPremium.Domain.Catalog.Brand", b =>
