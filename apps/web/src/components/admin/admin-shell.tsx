@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { LayoutDashboard, Package, FolderTree, Tags, Images, Menu, X, BookOpen, Inbox, Settings2, ChevronDown, UserRound, Users, ShoppingBag, ChartNoAxesCombined } from "lucide-react";
+import { LayoutDashboard, Package, FolderTree, Tags, Images, Menu, X, BookOpen, Inbox, Settings2, ChevronDown, UserRound, Users, ShoppingBag, ChartNoAxesCombined, ArrowUpRight } from "lucide-react";
 import { Toaster } from "sonner";
 import type { CurrentAdminUser } from "@/lib/auth/types";
 import { permissions, hasPermission } from "@/lib/permissions";
@@ -11,11 +11,11 @@ import { LogoutButton } from "@/app/admin/(protected)/logout-button";
 
 const links = [
   { href: "/admin", label: "Tổng quan", icon: LayoutDashboard, group: "Không gian làm việc" },
-  { href: "/admin/products", label: "Sản phẩm", icon: Package, group: "Catalog" },
+  { href: "/admin/products", label: "Sản phẩm", icon: Package, group: "Trà cụ" },
   { href: "/admin/categories", label: "Danh mục", icon: FolderTree, group: "Catalog" },
   { href: "/admin/brands", label: "Thương hiệu", icon: Tags, group: "Catalog" },
   { href: "/admin/media", label: "Thư viện ảnh", icon: Images, group: "Catalog" },
-  { href: "/admin/articles", label: "Bài viết", icon: BookOpen, group: "Nội dung" },
+  { href: "/admin/articles", label: "Bài viết", icon: BookOpen, group: "Nội dung & SEO" },
   { href: "/admin/article-categories", label: "Danh mục bài viết", icon: FolderTree, group: "Nội dung" },
   { href: "/admin/leads", label: "Yêu cầu tư vấn", icon: Inbox, group: "Khách liên hệ" },
   { href: "/admin/customers", label: "Khách hàng", icon: Users, group: "Khách liên hệ" },
@@ -52,11 +52,11 @@ export function AdminShell({ user, children }: Readonly<{ user: CurrentAdminUser
     {open && <button type="button" aria-label="Đóng menu" className="fixed inset-0 z-30 bg-[#202722]/55 lg:hidden" onClick={() => setOpen(false)} />}
     <aside id="admin-navigation" className={`${open ? "visible translate-x-0" : "invisible -translate-x-full lg:visible"} fixed inset-y-0 left-0 z-40 flex w-[17rem] flex-col border-r border-[#244338] bg-[#233b32] text-[#f7f4ec] transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0`}>
       <div className="flex min-h-24 items-center justify-between border-b border-white/15 px-6">
-        <Link href="/admin" onClick={() => setOpen(false)} className="block min-w-0 no-underline"><span className="block font-serif text-[1.65rem] leading-none tracking-tight">TeaPremium</span><span className="mt-1.5 block text-[.62rem] font-semibold uppercase tracking-[.2em] text-[#d1b88c]">Quản trị nội dung</span></Link>
+        <Link href="/admin" onClick={() => setOpen(false)} className="block min-w-0 no-underline"><span className="block font-serif text-[1.65rem] leading-none tracking-tight">TeaPremium</span><span className="mt-1.5 block text-[.62rem] font-semibold uppercase tracking-[.2em] text-[#d1b88c]">Hệ thống quản trị trà cụ</span></Link>
         <button ref={menuCloseRef} type="button" aria-label="Đóng menu" className="grid size-10 place-items-center rounded-lg hover:bg-white/10 lg:hidden" onClick={() => { setOpen(false); menuTriggerRef.current?.focus(); }}><X size={20} /></button>
       </div>
       <nav aria-label="Quản trị" className="flex-1 overflow-y-auto px-3 py-5">
-        {["Không gian làm việc", "Catalog", "Nội dung", "Khách liên hệ", "Bán hàng", "Hệ thống"].map((group) => {
+        {["Không gian làm việc", "Trà cụ", "Khách liên hệ", "Bán hàng", "Nội dung & SEO", "Hệ thống"].map((group) => {
           const items = visible.filter((link) => link.group === group);
           if (!items.length) return null;
           return <div key={group} className="mb-5"><p className="px-4 pb-2 text-[.62rem] font-semibold uppercase tracking-[.2em] text-[#aebfb3]">{group}</p><div className="space-y-1">{items.map(({ href, label, icon: Icon }) => {
@@ -73,7 +73,7 @@ export function AdminShell({ user, children }: Readonly<{ user: CurrentAdminUser
           <button ref={menuTriggerRef} type="button" aria-label={open ? "Đóng menu" : "Mở menu"} aria-expanded={open} aria-controls="admin-navigation" className="grid size-11 shrink-0 place-items-center rounded-lg border border-[#ddd8cc] text-[#233b32] lg:hidden" onClick={() => setOpen(!open)}>{open ? <X size={20} /> : <Menu size={20} />}</button>
           <div className="min-w-0"><p className="truncate text-xs text-[#56635b]">Quản trị / {current?.label ?? "Tổng quan"}{detail ? ` / ${detail}` : ""}</p><p className="truncate text-sm font-semibold text-[#233b32]">{detail ? `${detail} ${current?.label.toLowerCase() ?? ""}` : current?.label ?? "Tổng quan"}</p></div>
         </div>
-        <details className="group relative shrink-0"><summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-lg border border-[#ddd8cc] bg-white px-3 text-sm text-[#233b32] [&::-webkit-details-marker]:hidden"><span className="grid size-7 place-items-center rounded-full bg-[#e7eee8]"><UserRound size={15} aria-hidden="true" /></span><span className="sr-only">Tài khoản quản trị: </span><span className="hidden max-w-36 truncate font-medium sm:inline">{user.email}</span><ChevronDown size={15} aria-hidden="true" /></summary><div className="absolute right-0 top-[calc(100%+.5rem)] z-30 w-64 rounded-xl border border-[#ddd8cc] bg-white p-4 shadow-xl"><p className="break-all text-sm font-semibold text-[#233b32]">{user.email}</p><p className="mt-1 text-xs text-[#56635b]">{user.roles.join(", ") || "Chưa có vai trò"}</p><div className="mt-4 border-t border-[#eeeae1] pt-3"><LogoutButton /></div></div></details>
+        <div className="flex shrink-0 items-center gap-3"><Link href="/" target="_blank" rel="noopener noreferrer" className="hidden min-h-11 items-center gap-2 rounded-lg border border-[#ddd8cc] bg-white px-4 text-sm font-medium text-[#233b32] hover:border-[#b79b6c] md:inline-flex">Xem website <ArrowUpRight size={15} aria-hidden="true" /></Link><details className="group relative shrink-0"><summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-lg border border-[#ddd8cc] bg-white px-3 text-sm text-[#233b32] [&::-webkit-details-marker]:hidden"><span className="grid size-7 place-items-center rounded-full bg-[#e7eee8]"><UserRound size={15} aria-hidden="true" /></span><span className="sr-only">Tài khoản quản trị: </span><span className="hidden max-w-36 truncate font-medium sm:inline">{user.email}</span><ChevronDown size={15} aria-hidden="true" /></summary><div className="absolute right-0 top-[calc(100%+.5rem)] z-30 w-64 rounded-xl border border-[#ddd8cc] bg-white p-4 shadow-xl"><p className="break-all text-sm font-semibold text-[#233b32]">{user.email}</p><p className="mt-1 text-xs text-[#56635b]">{user.roles.join(", ") || "Chưa có vai trò"}</p><div className="mt-4 border-t border-[#eeeae1] pt-3"><LogoutButton /></div></div></details></div>
       </header>
       <div id="admin-content" className="admin-page px-4 py-7 sm:px-7 sm:py-9 xl:px-10 xl:py-10">{children}</div>
     </div>

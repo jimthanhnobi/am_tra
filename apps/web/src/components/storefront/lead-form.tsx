@@ -6,11 +6,11 @@ import { publicMutationUrl } from "@/lib/api/public-browser";
 type Field = "name" | "contact" | "message" | "consent";
 const fieldClass = "mt-2 min-h-12 w-full border border-[#bcb5a7] bg-white px-4 py-3 text-base text-[#202722] outline-none focus:border-[#925b3d]";
 
-export function LeadForm() {
+export function LeadForm({ initialMessage = "" }: Readonly<{ initialMessage?: string }>) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(initialMessage);
   const [website, setWebsite] = useState("");
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
