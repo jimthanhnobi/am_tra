@@ -95,14 +95,15 @@ internal static class DemoShowcaseSeeder
         new(2, 1, 1, 1450000m, 800000m, "zalo_oa", true, "Cancelled", "demo-oa"),
     ];
 
-    public static async Task<string> SeedAsync(AppDbContext db, Guid authorId, CancellationToken ct)
+    public static async Task<string> SeedAsync(AppDbContext db, Guid authorId, CancellationToken ct,
+        bool manageOwnTransaction = true)
     {
         ArgumentNullException.ThrowIfNull(db);
         if (authorId == Guid.Empty) throw new ArgumentException("Admin author required.", nameof(authorId));
         if ((await db.Database.GetPendingMigrationsAsync(ct)).Any())
             throw new InvalidOperationException("Apply Development migrations before seed-demo-showcase.");
 
-        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        await using var transaction = manageOwnTransaction ? await db.Database.BeginTransactionAsync(ct) : null;
         var brand = await db.Brands.SingleOrDefaultAsync(x => x.Slug == "teapremium-demo", ct);
         if (brand is null)
         {
@@ -254,7 +255,7 @@ internal static class DemoShowcaseSeeder
                 DateTimeOffset.UtcNow));
         }
         await db.SaveChangesAsync(ct);
-        await transaction.CommitAsync(ct);
+        if (transaction is not null) await transaction.CommitAsync(ct);
         return $"Demo loaded: {products.Count} products, {Categories.Length} categories, {examples.Length} articles, " +
                $"{customers.Count} customers, {Orders.Length} order fixtures and 4 leads. Existing demo rows kept.";
 
