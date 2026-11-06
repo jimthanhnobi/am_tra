@@ -1,0 +1,77 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!**/.env.example
+secrets.json
+appsettings.Local.json
+appsettings.*.Local.json
+appsettings.*.local.json
+*.pfx
+*.p12
+*.key
+*.pem
+
+# .NET
+**/bin/
+**/obj/
+**/artifacts/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.pubxml.user
+*.nupkg
+*.snupkg
+TestResults/
+coverage/
+*.trx
+*.coverage
+*.coveragexml
+coverage*.xml
+coverage*.json
+
+# Node / Next.js
+**/node_modules/
+**/.pnp
+**/.pnp.*
+**/.yarn/*
+!**/.yarn/patches/
+!**/.yarn/plugins/
+!**/.yarn/releases/
+!**/.yarn/versions/
+apps/web/.next/
+apps/web/out/
+apps/web/build/
+apps/web/next-env.d.ts
+*.tsbuildinfo
+**/.turbo/
+**/.pnpm-store/
+**/.vercel/
+.eslintcache
+.stylelintcache
+*.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Browser and end-to-end tests
+playwright-report/
+test-results/
+blob-report/
+
+# Editors and operating systems
+.vs/
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Desktop.ini
+Thumbs.db
+
+# Local database exports and backups
+*.bak
+*.dump
+

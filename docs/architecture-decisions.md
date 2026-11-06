@@ -15,7 +15,7 @@ Trạng thái dùng trong tài liệu:
 | ID | Quyết định | Hệ quả chính |
 |---|---|---|
 | AD-01 | MVP là SEO-first product catalog + custom CMS + contact/lead generation + Admin. | Tối ưu publish, nội dung và chuyển đổi liên hệ; không tối ưu luồng mua hàng online. |
-| AD-02 | Không public price; không cart, order, checkout, payment hay nút đặt hàng online; không tạo bảng commerce trong MVP. | Public DTO và JSON-LD không có giá/`Offer`; commerce chỉ là hướng mở rộng sau này. |
+| AD-02 | Không public price; không cart, checkout, payment hay nút đặt hàng online. Ngoại lệ CRM: `sales_orders` chỉ dùng trong Admin để ghi nhận đơn đã tư vấn/chốt ngoài website. | Public DTO và JSON-LD không có giá/`Offer`; đơn và số tiền nội bộ không được lộ qua Public API. |
 | AD-03 | Một shop, một storefront, một ngôn ngữ `vi-VN`. | Chuẩn bị boundary i18n nhưng không thêm locale route hoặc bản dịch giả trong MVP. |
 | AD-04 | Backend là .NET 10 Web API Controllers + EF Core 10; dữ liệu trong một PostgreSQL. | Controller mỏng, contract rõ; migration do EF Core quản lý nhưng không chạy tự động khi Production startup. |
 | AD-05 | Hệ thống là Modular Monolith với các lớp `Api/Application/Domain/Infrastructure`. | `Domain` không phụ thuộc hạ tầng; `Application` định nghĩa use case/port; `Infrastructure` triển khai; `Api` làm HTTP orchestration. Module không gọi HTTP lẫn nhau. |
@@ -77,5 +77,11 @@ Các module nghiệp vụ dự kiến: Catalog, Content, SEO, Leads, Identity v�
 
 ## Nguyên tắc thay đổi quyết định
 
-Thay đổi phạm vi, stack, public URL, boundary dependency, auth/session hoặc chính sách index phải được ghi bằng ADR mới: nêu vấn đề, lựa chọn, quyết định, hệ quả và kế hoạch migration. Không mở rộng sang commerce chỉ để “chuẩn bị trước”; giữ stable ID, slug, publish lifecycle và contract rõ là đủ để mở rộng sau.
+### AD-16 — Storefront SSR và index opt-in
+
+Storefront hiện dùng blocking SSR, fetch Public API `no-store`, sitemap/robots dynamic trên Next.js 16.4.3. Tắt Cache Components/PPR; chờ metadata để giữ HTTP 404 đúng cho missing/unpublished thay vì stream 200 trước khi biết visibility. Protected Admin giữ dynamic, authentication và CSRF hiện có. Không thay schema, không cần migration.
+
+Lựa chọn này ưu tiên visibility đúng sau publish/archive với request mới; chấp nhận TTFB và tải API cao hơn ISR. Sitemap đọc detail có giới hạn đồng thời để lọc canonical/indexability khi list DTO chưa có SEO flags. Chỉ bật index khi cấu hình origin HTTPS/thương hiệu thật và `SITE_INDEXABLE=true`. Chuyển sang ISR sau này cần invalidation và regression tests visibility. Chi tiết và các giới hạn redirect/profile nằm trong [storefront-seo.md](storefront-seo.md).
+
+Thay đổi phạm vi, stack, public URL, boundary dependency, auth/session hoặc chính sách index phải được ghi bằng ADR mới: nêu vấn đề, lựa chọn, quyết định, hệ quả và kế hoạch migration. Không mở rộng commerce public chỉ để “chuẩn bị trước”; ngoại lệ hiện tại chỉ là CRM/đơn nội bộ đã có consumer thật trong Admin.
 

@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function CatalogNotFound() { return <main id="noi-dung" className="sf-container sf-section mx-auto max-w-2xl text-center"><p className="sf-kicker">404</p><h1 className="sf-heading mt-4">Không tìm thấy nội dung</h1><p className="sf-copy mt-5">Đường dẫn này không tồn tại hoặc nội dung hiện chưa được công bố.</p><Link href="/" className="sf-button mt-8">Về trang chủ</Link></main>; }

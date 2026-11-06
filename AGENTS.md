@@ -4,7 +4,7 @@
 
 - Xây dựng catalog trà cụ cao cấp ưu tiên SEO, custom CMS, quản trị và thu lead.
 - MVP phục vụ một shop, chỉ `vi-VN`; cấu trúc phải sẵn sàng cho i18n nhưng không tạo bản dịch giả.
-- Không hiển thị giá công khai; không cart, order, checkout, payment hay nút đặt hàng online. Không tạo bảng commerce trong MVP.
+- Không hiển thị giá công khai; không cart, checkout, payment hay nút đặt hàng online. Ngoại lệ giai đoạn CRM: có bảng `sales_orders` **chỉ trong Admin** để ghi nhận đơn tư vấn/chốt ngoài website; tuyệt đối không lộ giá, đơn nội bộ trên Public API.
 - Không tự suy đoán thông tin shop, địa chỉ, liên hệ, xuất xứ, chứng nhận hoặc dữ liệu sản phẩm.
 
 ## Kiến trúc và dependency
@@ -31,23 +31,26 @@
 ## SEO và publishing
 
 - Các trang public Published phải có HTML nội dung chính và metadata được render/prerender phía server; không phụ thuộc client fetch để index.
-- Chỉ `Published` và indexable xuất hiện trong API public/sitemap. Draft, Archived, Admin, Preview và tìm kiếm nội bộ không được index.
+- API public chỉ trả entity `Published`; `robotsIndex=false` vẫn có thể xem công khai với HTTP 200 và metadata noindex. Sitemap chỉ đưa URL Published, indexable, canonical 200. Draft, Archived, Admin, Preview và tìm kiếm nội bộ không được index.
 - Mỗi trang indexable có title, description, canonical, H1 hợp lý và metadata social; slug Published đổi phải có redirect 301.
 - JSON-LD phải phản ánh dữ liệu thật. Không tạo `Offer`, giá `0`, availability, rating/review hoặc thông tin shop giả.
 - Giữ `/tim-kiem` noindex; filter/sort không tự sinh landing page indexable. Ảnh cần dimensions và ALT đúng thực tế.
 
-## Kiểm tra và lệnh dự kiến
+## Kiểm tra và lệnh chuẩn
 
-Các lệnh dưới đây chỉ có hiệu lực sau khi scaffold; cập nhật file này nếu cấu trúc hoặc package manager được chốt khác đi.
+Chạy từ repository root; cập nhật file này nếu cấu trúc hoặc package manager được chốt khác đi.
 
 ```powershell
-dotnet restore backend/TeaPremium.sln
-dotnet build backend/TeaPremium.sln --no-restore
-dotnet test backend/TeaPremium.sln --no-build
-npm --prefix apps/web run lint
-npm --prefix apps/web run typecheck
-npm --prefix apps/web test
-npm --prefix apps/web run build
+dotnet restore backend/TeaPremium.sln --locked-mode
+dotnet build backend/TeaPremium.sln --configuration Release --no-restore
+dotnet test backend/TeaPremium.sln --configuration Release --no-build
+corepack pnpm --dir apps/web install --frozen-lockfile
+corepack pnpm --dir apps/web lint
+corepack pnpm --dir apps/web typecheck
+corepack pnpm --dir apps/web test:seo
+corepack pnpm --dir apps/web test:commerce
+corepack pnpm --dir apps/web test:storefront
+corepack pnpm --dir apps/web build
 ```
 
 - Mọi thay đổi phải có kiểm tra phù hợp và báo đúng lệnh đã chạy; không nhận pass nếu lệnh chưa chạy/không tồn tại.
