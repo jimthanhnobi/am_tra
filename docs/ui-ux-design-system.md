@@ -1,4 +1,4 @@
-# TeaPremium — Storefront & Admin UI/UX Design System (2026-11-04)
+# TeaPremium — Storefront UI/UX Design System (2026-11-04)
 
 ## Visual north star
 
@@ -7,9 +7,9 @@ The interface is for premium teaware (ấm tử sa, ấm gang, trà cụ and fut
 Quiet, intentional whitespace; paper, natural clay, tea-leaf green, a sense of reading rhythm.
 Do **not** use gradient-heavy SaaS cards, glassmorphism, aggressive countdowns, fake ratings, fabricated testimonials, or heavy autoplay hero videos.
 
-### Shared design tokens
+### Storefront design tokens
 
-Defined in `apps/web/src/app/globals.css` for both `storefront.css` and `admin.css`:
+Defined in `apps/web/src/app/globals.css` and used by the storefront:
 
 | Token | Hex | Use |
 |---|---|---|
@@ -35,21 +35,6 @@ comfortable 1.7–1.95 reading line heights, and reduced motion support.
 5. **Knowledge/About/Search**: same editorial typography, spacing, visual rhythm. Preserve index/noindex rules.
 
 Images MUST originate from actual published Product / MediaAsset records. Do not hardcode third-party images as if they belong to the shop. Image aspect ratio and ALT should reflect actual product photography. To get a polished first fold, the operator must publish at least one product with a high-quality cover image; no frontend restyling can replace real content.
-
-## The operator journey (one consultant, no employee workflow)
-
-- **Dashboard** (`/admin`): grouped Sales and Catalog facts, recent products, daily shortcuts. Honor existing Identity permissions; never request Sales analytics for a user lacking `Leads.Read`.
-- **Customers** (`/admin/customers`): compact search, one create form, legible table, real interaction history, import CSV entry.
-- **Orders** (`/admin/orders`): phone lookup with explicit customer confirmation; multiple product lines (within existing API's limit), private unit price/cost, projected total, safe status confirmation dialogs, responsive order history.
-- **Reports** (`/admin/reports`): simple KPI cards and comparable channel/source bars, one clear date range. Only Completed orders count. Acquisition and closing-channel breakdowns must NEVER be summed together. Unknown purchase history stays Unknown.
-- **Catalog / CMS / Leads / Media / Settings**: use shared panel, field, badge, spacing and button classes from `admin.css`; keep the established validation, unsaved changes, permission and publishing behavior.
-- Sidebar, header and menus use the same Forest/Paper/Clay visual grammar. Mobile navigation must remain usable.
-
-### Primary Admin primitives
-
-`admin-panel`, `admin-page-header`, `admin-eyebrow`, `admin-title`, `admin-card-heading`, `admin-primary-button`, `admin-secondary-button`, `admin-field`, `admin-tag`, `admin-status`, `admin-data-table`, `admin-table-empty`.
-
-Do not duplicate raw button styling within every screen. Reuse existing `Button`, `Card`, `ConfirmDialog`, `StatusBadge` when appropriate. API data must remain server-authorized; UI hiding is not authorization.
 
 ## How to configure the production look without fabricated data
 

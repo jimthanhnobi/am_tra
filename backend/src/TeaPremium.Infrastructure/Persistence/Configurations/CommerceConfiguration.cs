@@ -9,6 +9,7 @@ internal sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
     public void Configure(EntityTypeBuilder<Customer> b)
     {
         b.ToTable("customers");
+        b.Property<uint>("Version").IsRowVersion();
         b.HasKey(x => x.Id).HasName("pk_customers");
         b.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
         b.Property(x => x.Name).HasColumnName("name").HasMaxLength(200).IsRequired();
@@ -47,7 +48,14 @@ internal sealed class SalesOrderConfiguration : IEntityTypeConfiguration<SalesOr
 {
     public void Configure(EntityTypeBuilder<SalesOrder> b)
     {
-        b.ToTable("sales_orders");
+        b.ToTable("sales_orders", table =>
+        {
+            table.HasCheckConstraint("ck_sales_orders_status", "status IN ('Confirmed','Completed','Cancelled','Returned')");
+            table.HasCheckConstraint("ck_sales_orders_money", "total_amount >= 0");
+            table.HasCheckConstraint("ck_sales_orders_completed", "(status IN ('Completed','Returned')) = (completed_at_utc IS NOT NULL)");
+            table.HasCheckConstraint("ck_sales_orders_returned", "(status = 'Returned') = (returned_at_utc IS NOT NULL)");
+        });
+        b.Property<uint>("Version").IsRowVersion();
         b.HasKey(x => x.Id).HasName("pk_sales_orders");
         b.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
         b.Property(x => x.OrderCode).HasColumnName("order_code").HasMaxLength(32).IsRequired();
@@ -62,6 +70,9 @@ internal sealed class SalesOrderConfiguration : IEntityTypeConfiguration<SalesOr
         b.Property(x => x.TotalAmount).HasColumnName("total_amount").HasPrecision(18, 2);
         b.Property(x => x.CreatedAtUtc).HasColumnName("created_at_utc").HasColumnType("timestamp with time zone");
         b.Property(x => x.CompletedAtUtc).HasColumnName("completed_at_utc").HasColumnType("timestamp with time zone");
+        b.Property(x => x.OrderedAtUtc).HasColumnName("ordered_at_utc").HasColumnType("timestamp with time zone");
+        b.Property(x => x.ReturnedAtUtc).HasColumnName("returned_at_utc").HasColumnType("timestamp with time zone");
+        b.Property(x => x.StatusReason).HasColumnName("status_reason").HasMaxLength(500);
         b.HasOne<Customer>().WithMany().HasForeignKey(x => x.CustomerId)
             .OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_sales_orders_customers");
         b.HasOne<TeaPremium.Domain.Leads.Lead>().WithMany().HasForeignKey(x => x.LeadId)
@@ -80,7 +91,11 @@ internal sealed class SalesOrderItemConfiguration : IEntityTypeConfiguration<Sal
 {
     public void Configure(EntityTypeBuilder<SalesOrderItem> b)
     {
-        b.ToTable("sales_order_items");
+        b.ToTable("sales_order_items", table =>
+        {
+            table.HasCheckConstraint("ck_sales_order_items_quantity", "quantity BETWEEN 1 AND 100000");
+            table.HasCheckConstraint("ck_sales_order_items_price", "unit_price >= 0 AND (unit_cost IS NULL OR unit_cost >= 0)");
+        });
         b.HasKey(x => x.Id).HasName("pk_sales_order_items");
         b.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
         b.Property(x => x.SalesOrderId).HasColumnName("sales_order_id");

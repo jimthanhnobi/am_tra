@@ -17,6 +17,8 @@ public sealed class CommerceRulesTests
     [InlineData("84912")]
     [InlineData("")]
     [InlineData("abc")]
+    [InlineData("0000000000")]
+    [InlineData("abc0912345678")]
     public void RejectsInvalidPhones(string input) =>
         Assert.Throws<CommerceInputException>(() => CommerceService.NormalizePhone(input));
 
@@ -50,7 +52,7 @@ public sealed class CommerceRulesTests
         var item = new SalesOrderItem(Guid.NewGuid(), "Ấm thử", null, 1, 100000m, null);
         var order = new SalesOrder(Guid.NewGuid(), Guid.NewGuid(), null,
             "zalo_personal", "legacy_base", true, null, [item]);
-        order.Transition(SalesOrderStatus.Cancelled);
+        order.Transition(SalesOrderStatus.Cancelled, reason: "Customer cancelled before delivery.");
         Assert.Null(order.CompletedAtUtc);
         Assert.Throws<InvalidOperationException>(() => order.Transition(SalesOrderStatus.Completed));
     }
@@ -68,4 +70,33 @@ public sealed class CommerceRulesTests
     public void InvalidLineValuesAreRejected() =>
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             new SalesOrderItem(Guid.NewGuid(), "Ấm thử", null, 0, 200000m, null));
+
+    [Fact]
+    public void BusinessDatesAndOrderCodeUseVietnamMidnight()
+    {
+        var now = new DateTimeOffset(2026, 11, 30, 23, 0, 0, TimeSpan.Zero);
+        Assert.Equal(new DateOnly(2026, 12, 1), TeaPremium.Domain.Common.BusinessCalendar.DateAt(now));
+        Assert.Equal(new DateTimeOffset(2026, 11, 30, 17, 0, 0, TimeSpan.Zero),
+            TeaPremium.Domain.Common.BusinessCalendar.StartOfDayUtc(new DateOnly(2026, 12, 1)));
+        var order = new SalesOrder(Guid.NewGuid(), Guid.NewGuid(), null, "phone", "unknown", false, null,
+            [new SalesOrderItem(Guid.NewGuid(), "Test", null, 1, 100m, null)], nowUtc: now);
+        Assert.StartsWith("TP-20261201-", order.OrderCode, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void DeliveryCanBeBackdatedAndReturnedWithReason()
+    {
+        var now = new DateTimeOffset(2026, 11, 5, 10, 0, 0, TimeSpan.Zero);
+        var order = new SalesOrder(Guid.NewGuid(), Guid.NewGuid(), null, "phone", "unknown", false, null,
+            [new SalesOrderItem(Guid.NewGuid(), "Test", null, 1, 100m, null)], now.AddDays(-10), now);
+        Assert.Throws<ArgumentException>(() => order.Transition(SalesOrderStatus.Completed, now.AddDays(1), nowUtc: now));
+        Assert.Throws<ArgumentException>(() => order.Transition(SalesOrderStatus.Completed, now.AddDays(-11), nowUtc: now));
+        order.Transition(SalesOrderStatus.Completed, now.AddDays(-5), nowUtc: now);
+        Assert.Equal(now.AddDays(-5), order.CompletedAtUtc);
+        Assert.Throws<ArgumentException>(() => order.Transition(SalesOrderStatus.Returned, nowUtc: now));
+        order.Transition(SalesOrderStatus.Returned, reason: "Customer returned all goods", nowUtc: now);
+        Assert.Equal(now, order.ReturnedAtUtc);
+        Assert.Equal(now.AddDays(-5), order.CompletedAtUtc);
+        Assert.Throws<InvalidOperationException>(() => order.Transition(SalesOrderStatus.Completed, nowUtc: now));
+    }
 }

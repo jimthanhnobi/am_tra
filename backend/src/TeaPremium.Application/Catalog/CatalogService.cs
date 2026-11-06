@@ -62,6 +62,7 @@ internal sealed class CatalogService(
             normalized.BrandId,
             normalized.MaterialText,
             normalized.CapacityMl);
+        product.SetSellable(command.IsSellable);
 
         foreach (var categoryId in normalized.CategoryIds)
         {
@@ -100,7 +101,8 @@ internal sealed class CatalogService(
 
         var previousSlug = product.Slug;
         var slugChanged = !string.Equals(previousSlug, normalized.Slug, StringComparison.Ordinal);
-        if (slugChanged && product.Status == PublicationStatus.Published &&
+        var hasBeenPublished = product.PublishedAt.HasValue;
+        if (slugChanged && hasBeenPublished &&
             SeoRedirect.CanonicalPointsToSource(normalized.Seo.CanonicalOverride,
                 SeoRedirect.ContentPath("san-pham", previousSlug)))
             throw new CatalogValidationException(new Dictionary<string, string[]>
@@ -126,7 +128,7 @@ internal sealed class CatalogService(
         await store.ExecuteInTransactionAsync(
             async token =>
             {
-                if (slugChanged && product.Status == PublicationStatus.Published)
+                if (slugChanged && hasBeenPublished)
                     await redirects.RecordSlugChangeAsync(
                         SeoRedirect.ContentPath("san-pham", previousSlug),
                         SeoRedirect.ContentPath("san-pham", normalized.Slug), token);
@@ -154,6 +156,9 @@ internal sealed class CatalogService(
                 {
                     product.MoveToInReview();
                 }
+                else if (requestedStatus == PublicationStatus.Draft && product.Status != PublicationStatus.Draft)
+                    product.ReturnToDraft();
+                if (command.IsSellable.HasValue) product.SetSellable(command.IsSellable.Value);
 
                 await store.SaveChangesAsync(token);
             },
@@ -760,13 +765,14 @@ internal sealed class CatalogService(
         PublicationStatus requested)
     {
         if (requested == current ||
-            current == PublicationStatus.Draft && requested == PublicationStatus.InReview)
+            current == PublicationStatus.Draft && requested == PublicationStatus.InReview ||
+            current is PublicationStatus.InReview or PublicationStatus.Archived && requested == PublicationStatus.Draft)
         {
             return;
         }
 
         throw new CatalogConflictException(
-            "PATCH can only move a Draft product to InReview. Use the publish/archive endpoints for later transitions.");
+            "PATCH supports Draft to InReview, or InReview/Archived back to Draft. Use publish/archive for public transitions.");
     }
 
     private CategoryInput NormalizeCategory(CreateCategoryCommand command) =>

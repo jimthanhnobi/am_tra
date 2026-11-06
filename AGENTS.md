@@ -48,6 +48,7 @@ corepack pnpm --dir apps/web install --frozen-lockfile
 corepack pnpm --dir apps/web lint
 corepack pnpm --dir apps/web typecheck
 corepack pnpm --dir apps/web test:seo
+corepack pnpm --dir apps/web test:commerce
 corepack pnpm --dir apps/web test:storefront
 corepack pnpm --dir apps/web build
 ```

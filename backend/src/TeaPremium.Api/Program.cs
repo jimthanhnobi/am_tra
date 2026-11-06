@@ -25,11 +25,12 @@ Activity.ForceDefaultIdFormat = true;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var trustedProxyIp = builder.Configuration["TRUSTED_PROXY_IP"]?.Trim();
-if (!string.IsNullOrEmpty(trustedProxyIp))
+var trustedProxyIps = new[] { builder.Configuration["TRUSTED_PROXY_IP"]?.Trim(), builder.Configuration["TRUSTED_BFF_IP"]?.Trim() };
+var hasTrustedProxy = trustedProxyIps.Any(value => !string.IsNullOrEmpty(value));
+foreach (var trustedProxyIp in trustedProxyIps.Where(value => !string.IsNullOrEmpty(value)))
 {
     if (!IPAddress.TryParse(trustedProxyIp, out var proxyAddress))
-        throw new InvalidOperationException("TRUSTED_PROXY_IP must be a single IP address.");
+        throw new InvalidOperationException("TRUSTED_PROXY_IP and TRUSTED_BFF_IP must each be a single IP address.");
     builder.Services.Configure<ForwardedHeadersOptions>(options =>
     {
         options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -46,6 +47,22 @@ builder.Services
     .AddApi(builder.Configuration, builder.Environment);
 
 var app = builder.Build();
+
+if (args.Any(argument => string.Equals(
+        argument,
+        "reset-admin-password",
+        StringComparison.OrdinalIgnoreCase)))
+{
+    if (!app.Environment.IsDevelopment())
+        throw new InvalidOperationException(
+            "reset-admin-password is restricted to the Development environment.");
+
+    await using var scope = app.Services.CreateAsyncScope();
+    var bootstrapper = scope.ServiceProvider.GetRequiredService<IAdminBootstrapper>();
+    await bootstrapper.ResetPasswordAsync();
+    ApiLog.AdminPasswordResetCompleted(app.Logger);
+    return;
+}
 
 if (args.Any(argument => string.Equals(
         argument,
@@ -129,7 +146,7 @@ ApiLog.StartingApi(
     apiMetadata.Name,
     apiMetadata.Version);
 
-if (!string.IsNullOrEmpty(trustedProxyIp)) app.UseForwardedHeaders();
+if (hasTrustedProxy) app.UseForwardedHeaders();
 
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<AdminNoStoreMiddleware>();
@@ -157,7 +174,7 @@ else
     app.UseHsts();
     // With a trusted TLS proxy, the API also receives private HTTP calls from
     // the Next BFF. The proxy owns the public HTTP-to-HTTPS redirect.
-    if (string.IsNullOrEmpty(trustedProxyIp)) app.UseHttpsRedirection();
+    if (!hasTrustedProxy) app.UseHttpsRedirection();
 }
 
 app.UseRouting();

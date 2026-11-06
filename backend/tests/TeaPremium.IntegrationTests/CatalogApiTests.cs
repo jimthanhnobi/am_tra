@@ -433,6 +433,31 @@ public sealed class CatalogApiTests : IAsyncLifetime, IDisposable
             Assert.Equal(HttpStatusCode.Conflict, loop.StatusCode);
         using (var afterRejectedRename = await client.GetAsync($"/api/v1/public/products/{thirdProductSlug}"))
             Assert.Equal(HttpStatusCode.OK, afterRejectedRename.StatusCode);
+
+        // A product may be reopened for editing after archival. Its former public URL must still
+        // join the direct redirect chain when the slug changes before the next publication.
+        using (var archive = await SendWithCsrfAsync(client, HttpMethod.Post,
+            $"/api/v1/admin/products/{product.Id}/archive"))
+            Assert.Equal(HttpStatusCode.OK, archive.StatusCode);
+        var fourthProductSlug = $"reopened-product-{suffix}";
+        AdminProductDetail reopened;
+        using (var reopen = await PatchJsonAsync(client, $"/api/v1/admin/products/{product.Id}",
+            update with { Slug = fourthProductSlug, Status = "Draft" }))
+        {
+            Assert.Equal(HttpStatusCode.OK, reopen.StatusCode);
+            reopened = Assert.IsType<AdminProductDetail>(
+                await reopen.Content.ReadFromJsonAsync<AdminProductDetail>());
+        }
+        reopened = await MoveProductToInReviewAsync(client, reopened);
+        using (var republish = await SendWithCsrfAsync(client, HttpMethod.Post,
+            $"/api/v1/admin/products/{product.Id}/publish"))
+            Assert.Equal(HttpStatusCode.OK, republish.StatusCode);
+        foreach (var oldSlug in new[] { firstProductSlug, secondProductSlug, thirdProductSlug })
+        {
+            using var redirect = await client.GetAsync($"/api/v1/public/seo-redirects?sourcePath=/san-pham/{oldSlug}");
+            Assert.Equal(HttpStatusCode.OK, redirect.StatusCode);
+            Assert.Contains($"/san-pham/{fourthProductSlug}", await redirect.Content.ReadAsStringAsync());
+        }
     }
 
     [Fact]

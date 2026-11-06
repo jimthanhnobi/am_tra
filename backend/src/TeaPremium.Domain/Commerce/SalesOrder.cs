@@ -1,7 +1,8 @@
 using System.Globalization;
+using TeaPremium.Domain.Common;
 namespace TeaPremium.Domain.Commerce;
 
-public enum SalesOrderStatus { Confirmed, Completed, Cancelled }
+public enum SalesOrderStatus { Confirmed, Completed, Cancelled, Returned }
 
 public sealed class SalesOrder
 {
@@ -9,11 +10,16 @@ public sealed class SalesOrder
 
     public SalesOrder(Guid customerId, Guid requestId, Guid? leadId, string closingChannel,
         string acquisitionSource, bool? isReturning, string? campaignCode,
-        IReadOnlyCollection<SalesOrderItem> items)
+        IReadOnlyCollection<SalesOrderItem> items, DateTimeOffset? orderedAtUtc = null,
+        DateTimeOffset? nowUtc = null)
     {
         if (items.Count is 0 or > 50) throw new ArgumentException("Order items count must be 1-50.");
         Id = Guid.NewGuid();
-        OrderCode = "TP-" + DateTimeOffset.UtcNow.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + "-" +
+        var now = (nowUtc ?? DateTimeOffset.UtcNow).ToUniversalTime();
+        OrderedAtUtc = (orderedAtUtc ?? now).ToUniversalTime();
+        if (OrderedAtUtc > now || OrderedAtUtc < now.AddDays(-90))
+            throw new ArgumentException("Order date must be within the past 90 days.");
+        OrderCode = "TP-" + BusinessCalendar.DateAt(OrderedAtUtc).ToString("yyyyMMdd", CultureInfo.InvariantCulture) + "-" +
             Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
         RequestId = requestId;
         CustomerId = customerId;
@@ -23,7 +29,7 @@ public sealed class SalesOrder
         IsReturning = isReturning;
         CampaignCode = campaignCode;
         Status = SalesOrderStatus.Confirmed;
-        CreatedAtUtc = DateTimeOffset.UtcNow;
+        CreatedAtUtc = now;
         Items = items.ToList();
         TotalAmount = Items.Sum(x => x.LineAmount);
     }
@@ -40,16 +46,32 @@ public sealed class SalesOrder
     public SalesOrderStatus Status { get; private set; }
     public decimal TotalAmount { get; private set; }
     public DateTimeOffset CreatedAtUtc { get; private set; }
+    public DateTimeOffset OrderedAtUtc { get; private set; }
     public DateTimeOffset? CompletedAtUtc { get; private set; }
+    public DateTimeOffset? ReturnedAtUtc { get; private set; }
+    public string? StatusReason { get; private set; }
     public ICollection<SalesOrderItem> Items { get; private set; } = new List<SalesOrderItem>();
 
-    public void Transition(SalesOrderStatus next)
+    public void Transition(SalesOrderStatus next, DateTimeOffset? occurredAtUtc = null,
+        string? reason = null, DateTimeOffset? nowUtc = null)
     {
-        if (Status != SalesOrderStatus.Confirmed ||
-            next is not (SalesOrderStatus.Completed or SalesOrderStatus.Cancelled))
-            throw new InvalidOperationException("Only confirmed orders can be completed or cancelled.");
+        var allowed = Status == SalesOrderStatus.Confirmed &&
+            next is SalesOrderStatus.Completed or SalesOrderStatus.Cancelled ||
+            Status == SalesOrderStatus.Completed && next == SalesOrderStatus.Returned;
+        if (!allowed) throw new InvalidOperationException("This order transition is not allowed.");
+        if (reason?.Trim().Length > 500) throw new ArgumentException("Reason must be at most 500 characters.");
+        if (next is SalesOrderStatus.Cancelled or SalesOrderStatus.Returned &&
+            (string.IsNullOrWhiteSpace(reason) || reason.Trim().Length > 500))
+            throw new ArgumentException("Cancellation/return requires a reason of 1-500 characters.");
+        var now = (nowUtc ?? DateTimeOffset.UtcNow).ToUniversalTime();
+        var occurred = (occurredAtUtc ?? now).ToUniversalTime();
+        if (occurred > now || occurred < OrderedAtUtc || occurred < now.AddDays(-90) ||
+            next == SalesOrderStatus.Returned && occurred < CompletedAtUtc)
+            throw new ArgumentException("Event date must follow the order/delivery date and be within the past 90 days.");
         Status = next;
-        if (next == SalesOrderStatus.Completed) CompletedAtUtc = DateTimeOffset.UtcNow;
+        StatusReason = reason?.Trim();
+        if (next == SalesOrderStatus.Completed) CompletedAtUtc = occurred;
+        if (next == SalesOrderStatus.Returned) ReturnedAtUtc = occurred;
     }
 }
 

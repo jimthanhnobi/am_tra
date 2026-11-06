@@ -21,9 +21,9 @@ export default async function StorefrontLayout({ children }: Readonly<{ children
 
   return <div className="sf-site">
     <a href="#noi-dung" className="sr-only z-50 bg-white p-3 focus:not-sr-only focus:fixed focus:left-2 focus:top-2">Đến nội dung chính</a>
-    <div className="border-b border-[#d9d2c3] bg-[#233b32] text-[#f7f4ec]">
+    <div className="sf-announcement border-b border-[#d9d2c3] bg-[#233b32] text-[#f7f4ec]">
       <div className="sf-container flex min-h-9 items-center justify-between gap-3 py-1 text-[.67rem] font-medium tracking-[.12em]">
-        <span>TRÀ CỤ · TĨNH MỘC · SÂU</span>
+        <span>{tagline || "TRÀ CỤ · CHUYỆN THƯỞNG TRÀ"}</span>
         <Link href="/lien-he" className="inline-flex items-center gap-2 hover:underline">KẾT NỐI TƯ VẤN <ArrowUpRight size={13} aria-hidden="true" /></Link>
       </div>
     </div>
@@ -35,7 +35,7 @@ export default async function StorefrontLayout({ children }: Readonly<{ children
             : <span className="block font-serif text-[1.6rem] leading-none tracking-[-.05em] sm:text-[1.9rem]">{site.name}</span>}
           {tagline
             ? <span className="mt-1.5 block max-w-48 truncate text-[.59rem] font-semibold uppercase tracking-[.17em] text-[#925b3d]">{tagline}</span>
-            : <span className="mt-1.5 block text-[.58rem] font-semibold uppercase tracking-[.2em] text-[#925b3d]">TĨNH · MỘC · SÂU</span>}
+            : <span className="mt-1.5 block text-[.58rem] font-semibold uppercase tracking-[.2em] text-[#925b3d]">TRÀ CỤ · CHUYỆN THƯỞNG TRÀ</span>}
         </Link>
         <nav aria-label="Điều hướng chính" className="hidden items-center gap-5 lg:flex xl:gap-8">
           {navigation.map((item) => <Link key={item.href} href={item.href} className="sf-nav-link">{item.label}</Link>)}
@@ -46,7 +46,7 @@ export default async function StorefrontLayout({ children }: Readonly<{ children
         </div>
         <details className="sf-mobile-nav relative lg:hidden">
           <summary className="flex min-h-11 items-center gap-2 border border-[#d9d2c3] px-3 text-sm font-semibold text-[#233b32]">
-            <span className="sr-only">Mở hoặc đóng điều hướng</span><Menu size={19} aria-hidden="true" /> Danh mục
+            <span className="sr-only">Mở hoặc đóng điều hướng</span><Menu size={19} aria-hidden="true" /><span className="sf-mobile-label">Danh mục</span>
           </summary>
           <nav aria-label="Điều hướng trên điện thoại" className="sf-mobile-panel absolute right-0 top-[calc(100%+.85rem)] z-30 hidden w-[min(19rem,calc(100vw-2rem))] gap-1 border border-[#d9d2c3] bg-[#fffcf6] p-4 shadow-xl">
             {navigation.map((item) => <Link key={item.href} href={item.href} className="sf-nav-link px-3">{item.label}</Link>)}

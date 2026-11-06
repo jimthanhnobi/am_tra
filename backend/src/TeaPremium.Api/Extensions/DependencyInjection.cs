@@ -45,6 +45,8 @@ public static class DependencyInjection
             };
         });
         services.AddExceptionHandler<CatalogExceptionHandler>();
+        services.AddHttpContextAccessor();
+        services.AddScoped<IAuditContext, HttpAuditContext>();
 
         services.AddControllers(options =>
         {

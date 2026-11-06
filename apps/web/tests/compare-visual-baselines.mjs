@@ -5,16 +5,14 @@ import { readFile, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
 const baselineDir = resolve("tests/visual-baselines");
-const adminDir = resolve(process.env.ADMIN_CAPTURE_DIR || "../../artifacts/p11-run/admin-baselines");
 const storefrontDir = resolve(process.env.STOREFRONT_CAPTURE_DIR || "../../artifacts/p11-run/storefront-baselines");
-const baselines = (await readdir(baselineDir)).filter((name) => name.endsWith(".png"));
+const baselines = (await readdir(baselineDir)).filter((name) => name.startsWith("storefront-") && name.endsWith(".png"));
 if (!baselines.length) throw new Error("No visual baselines found.");
 
 const changed = [];
 for (const name of baselines) {
-  const admin = name.startsWith("admin-");
-  const suffix = name.slice(admin ? "admin-".length : "storefront-".length);
-  const captured = admin ? join(adminDir, suffix) : join(storefrontDir, suffix.startsWith("fixture-") ? suffix : `fixture-${suffix}`);
+  const suffix = name.slice("storefront-".length);
+  const captured = join(storefrontDir, suffix.startsWith("fixture-") ? suffix : `fixture-${suffix}`);
   try {
     const [expected, actual] = await Promise.all([readFile(join(baselineDir, name)), readFile(captured)]);
     const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");

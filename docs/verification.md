@@ -1,5 +1,33 @@
 # Xác minh local development và CI
 
+**Trạng thái hiện tại:** UI Admin đã được gỡ để thiết kế lại. Các kết quả kiểm tra
+`/admin/*` bên dưới là ghi chép lịch sử, không mô tả route hiện đang tồn tại.
+
+## Hardening commerce theo review — 05/11/2026
+
+Phạm vi này dùng PostgreSQL Docker cô lập `teapremium_test_review`; không migrate hoặc ghi vào
+database Development/Production của shop.
+
+| Kiểm tra | Kết quả cuối |
+|---|---|
+| `dotnet build backend/TeaPremium.sln --configuration Release --no-restore` | PASS, 0 warning/error |
+| `dotnet test backend/TeaPremium.sln --configuration Release --no-build` | PASS, 52 unit + 50 integration, 0 fail/skip |
+| `corepack pnpm --dir apps/web lint` | PASS |
+| `corepack pnpm --dir apps/web typecheck` | PASS |
+| `corepack pnpm --dir apps/web test:seo` | PASS, 6/6 |
+| `corepack pnpm --dir apps/web test:commerce` | PASS, 4/4 |
+| `corepack pnpm --dir apps/web test:storefront` | PASS, 14/14 HTTP contracts |
+| `corepack pnpm --dir apps/web build` | PASS sau HTTP fixture, trả `.next` về build bình thường |
+| EF `migrations has-pending-model-changes` | PASS, model khớp migration mới |
+| Backup image/config/shell + encrypted local restore drill | PASS; drill khôi phục sang DB test mới và từ chối DB không rỗng |
+| Browser E2E commerce | NOT RUN: test đã thêm nhưng hai lần khởi động Next standalone bị lớp thực thi chặn `blocked by policy` |
+| GitHub Actions/Production migration/R2 backup thật | NOT RUN |
+
+Browser E2E chưa chạy không được suy ra từ HTTP tests. Backup Production cũng chưa được xem là
+hoạt động cho đến khi có bucket/credential/khóa/scheduler/cảnh báo thật. Chi tiết thay đổi và phần
+còn lại nằm tại [review-remediation.md](review-remediation.md); runbook tại
+[backup-and-restore.md](backup-and-restore.md).
+
 **Ngày:** 31/10/2026  
 **Phạm vi:** cấu hình chạy local, đóng gói, CI, health, logging/lỗi, bảo mật tích hợp. Không triển khai Production hoặc mở rộng nghiệp vụ.
 

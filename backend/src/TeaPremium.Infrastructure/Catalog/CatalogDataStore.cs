@@ -651,7 +651,8 @@ internal sealed class CatalogDataStore(
                     media.IsCover))
                 .ToArray(),
             product.CreatedAtUtc,
-            product.UpdatedAtUtc);
+            product.UpdatedAtUtc,
+            product.IsSellable);
 
     private PublicMediaDto MapPublicMedia(ProductMedia media) =>
         new(

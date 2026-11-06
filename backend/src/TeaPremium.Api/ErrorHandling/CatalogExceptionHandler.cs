@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Diagnostics;
+using TeaPremium.Application.Authentication;
 using TeaPremium.Application.Catalog;
 using TeaPremium.Application.Commerce;
 using TeaPremium.Application.Content;
@@ -53,6 +54,14 @@ internal sealed class CatalogExceptionHandler : IExceptionHandler
             CommerceConflictException conflict => Results.Problem(
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Commerce conflict.",
+                detail: conflict.Message),
+            AdminUserInputException invalid => Results.Problem(
+                statusCode: StatusCodes.Status422UnprocessableEntity,
+                title: "Admin user input invalid.",
+                detail: invalid.Message),
+            AdminUserConflictException conflict => Results.Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Admin user conflict.",
                 detail: conflict.Message),
             LeadValidationException validation => Results.Problem(
                 statusCode: StatusCodes.Status422UnprocessableEntity,

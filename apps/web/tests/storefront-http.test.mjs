@@ -123,8 +123,9 @@ test("production storefront HTTP contract", { timeout: 180_000 }, async (t) => {
     }
     await t.test("editorial home and contextual product consultation use published data", async () => {
       const home = await get("/");
-      assert.match(home, /Một chiếc ấm/);
-      assert.match(home, /Trà cụ theo/);
+      assert.match(home, /<h1[^>]*>Ấm API thử nghiệm<\/h1>/);
+      assert.match(home, /Bắt đầu từ/);
+      assert.match(home, /Chọn Ấm API thử nghiệm|Xem chi tiết Ấm API thử nghiệm/);
       assert.match(home, /href="\/san-pham\/am-public"/);
       assert.doesNotMatch(home, /Giỏ hàng|Thanh toán ngay|PRIVATE_PRICE_SENTINEL/);
       const contact = await get("/lien-he?san-pham=am-public");

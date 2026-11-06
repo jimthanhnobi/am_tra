@@ -42,6 +42,8 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=${POSTGRES_DB:?Set POSTGRES_DB in .env};Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       PUBLIC_WEB_ORIGIN: http://localhost:${WEB_PORT:-3000}
+      AuthBootstrap__Email: ${ADMIN_BOOTSTRAP_EMAIL:-}
+      AuthBootstrap__Password: ${ADMIN_BOOTSTRAP_PASSWORD:-}
       R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
       R2_BUCKET_NAME: ${R2_BUCKET_NAME:-}
       R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}

@@ -6,6 +6,13 @@ const mediaUrl = mediaBaseUrl ? new URL(mediaBaseUrl) : null;
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  headers: async () => [{ source: "/:path*", headers: [
+    { key: "X-Content-Type-Options", value: "nosniff" },
+    { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+    { key: "X-Frame-Options", value: "DENY" },
+    { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+    { key: "Content-Security-Policy", value: "frame-ancestors 'none'; object-src 'none'; base-uri 'self'" },
+  ] }],
   reactStrictMode: true,
   // Blocking SSR preserves HTTP 404 and avoids stale Published content after Archive.
   cacheComponents: false,

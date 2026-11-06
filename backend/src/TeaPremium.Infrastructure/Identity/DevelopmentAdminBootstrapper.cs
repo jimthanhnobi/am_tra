@@ -64,6 +64,33 @@ internal sealed class DevelopmentAdminBootstrapper(
         return new AdminBootstrapResult(userCreated, roleGranted);
     }
 
+    public async Task ResetPasswordAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var email = configuration[EmailConfigurationKey]?.Trim();
+        var password = configuration[PasswordConfigurationKey];
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+        {
+            throw new InvalidOperationException(
+                "Set AuthBootstrap__Email and AuthBootstrap__Password through environment " +
+                "variables before running reset-admin-password.");
+        }
+
+        var user = await userManager.FindByEmailAsync(email) ??
+            throw new InvalidOperationException("The development admin user does not exist.");
+        if (!await userManager.IsInRoleAsync(user, AdminRoles.Admin))
+            throw new InvalidOperationException("The requested user does not have the Admin role.");
+
+        var token = await userManager.GeneratePasswordResetTokenAsync(user);
+        EnsureSucceeded(await userManager.ResetPasswordAsync(user, token, password),
+            "reset the development admin password");
+        EnsureSucceeded(await userManager.SetLockoutEndDateAsync(user, null),
+            "clear the development admin lockout");
+        EnsureSucceeded(await userManager.ResetAccessFailedCountAsync(user),
+            "clear the development admin access-failure count");
+    }
+
     private static void EnsureSucceeded(IdentityResult result, string operation)
     {
         if (result.Succeeded)

@@ -9,25 +9,15 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "next typegen && tsc --noEmit",
     "test:seo": "node --experimental-strip-types --test tests/seo.test.mjs",
+    "test:commerce": "node --experimental-strip-types --test tests/commerce.test.mjs",
     "test:storefront": "node --test tests/storefront-http.test.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@hookform/resolvers": "6.0.2",
-    "@radix-ui/react-alert-dialog": "1.2.1",
-    "@tanstack/react-table": "9.3.1",
-    "@tiptap/pm": "3.32.2",
-    "@tiptap/react": "3.32.2",
-    "@tiptap/starter-kit": "3.32.2",
-    "class-variance-authority": "0.7.1",
-    "clsx": "2.1.1",
     "lucide-react": "1.65.0",
     "next": "16.4.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "react-hook-form": "7.91.0",
-    "sonner": "2.0.8",
-    "tailwind-merge": "3.7.0",
     "zod": "4.6.7"
   },
   "devDependencies": {

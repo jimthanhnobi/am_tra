@@ -8,6 +8,9 @@ namespace TeaPremium.Api.Controllers;
 [Route("admin/leads")]
 public sealed class AdminLeadsController(LeadService leads) : AdminApiControllerBase
 {
+    [HttpGet("{id:guid}"), Authorize(Policy = Permissions.LeadsRead)]
+    public Task<LeadDto> Get(Guid id, CancellationToken ct) => leads.GetAsync(id, ct);
+
     [HttpGet]
     [Authorize(Policy = Permissions.LeadsRead)]
     public Task<LeadPage> List([FromQuery] int page = 1, [FromQuery] int pageSize = 20,

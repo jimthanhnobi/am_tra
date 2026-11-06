@@ -240,7 +240,7 @@ internal static class DemoShowcaseSeeder
                 customer.AcquisitionSource, item.Returning, item.Campaign,
                 [new SalesOrderItem(product.Id, product.Name, product.Sku, item.Quantity, item.Price, item.Cost)]);
             if (item.State == "Completed") order.Transition(SalesOrderStatus.Completed);
-            if (item.State == "Cancelled") order.Transition(SalesOrderStatus.Cancelled);
+            if (item.State == "Cancelled") order.Transition(SalesOrderStatus.Cancelled, reason: "Demo cancellation — not a real order.");
             db.SalesOrders.Add(order);
         }
 

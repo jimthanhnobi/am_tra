@@ -15,7 +15,7 @@ Foundation cho website catalog trà cụ cao cấp ưu tiên SEO, custom CMS và
 ## Cấu trúc
 
 ```text
-apps/web/                              Next.js storefront + Admin
+apps/web/                              Next.js storefront + Admin API proxy
 backend/src/TeaPremium.Api/            HTTP, health, OpenAPI, middleware
 backend/src/TeaPremium.Application/    Use cases và ports
 backend/src/TeaPremium.Domain/         Domain thuần
@@ -81,21 +81,31 @@ docker compose --env-file .env -f infra/docker/compose.yml ps
 |---|---|---|
 | PostgreSQL | `127.0.0.1:5432` | `POSTGRES_PORT` |
 | API | `http://localhost:5080` | `API_PORT` |
-| Web/Admin | `http://localhost:3000` | `WEB_PORT`; cập nhật `NEXT_PUBLIC_SITE_URL` cùng cổng |
+| Web | `http://localhost:3000` | `WEB_PORT`; cập nhật `NEXT_PUBLIC_SITE_URL` cùng cổng |
 
-`http://localhost:5080/health/live` kiểm tra tiến trình; `/health/ready` còn kiểm tra kết nối PostgreSQL và migration còn thiếu. Admin tại `http://localhost:3000/admin/login`; storefront tại `/`. Web SSR gọi API qua `http://api:5080`, còn form public từ trình duyệt gọi `http://localhost:5080`. `NEXT_PUBLIC_SITE_URL` phải khớp chính xác origin trình duyệt đang dùng, gồm giao thức và cổng, để Admin CSRF hoạt động. Các biến `NEXT_PUBLIC_*` và `R2_PUBLIC_BASE_URL` dùng khi build image web: sau khi đổi URL, cổng, CDN hoặc GA4 ID, chạy lại `up -d --build web`. Chỉ điền cả bộ biến R2 khi có bucket/CORS/CDN thật; để trống thì upload báo unavailable, không giả thành công.
+`http://localhost:5080/health/live` kiểm tra tiến trình; `/health/ready` còn kiểm tra kết nối PostgreSQL và migration còn thiếu. Storefront tại `/`; UI Admin đã được gỡ để thiết kế lại từng phần. Web SSR gọi API qua `http://api:5080`, còn form public từ trình duyệt gọi `http://localhost:5080`. `NEXT_PUBLIC_SITE_URL` phải khớp chính xác origin trình duyệt đang dùng, gồm giao thức và cổng. Các biến `NEXT_PUBLIC_*` và `R2_PUBLIC_BASE_URL` dùng khi build image web: sau khi đổi URL, cổng, CDN hoặc GA4 ID, chạy lại `up -d --build web`. Chỉ điền cả bộ biến R2 khi có bucket/CORS/CDN thật; để trống thì upload báo unavailable, không giả thành công.
 
-Nếu chưa có Admin Development, đặt `AuthBootstrap__Email` và `AuthBootstrap__Password` trong môi trường shell hiện tại rồi chạy lệnh một lần:
+Để giữ thông tin Admin local qua các lần chạy, đặt `ADMIN_BOOTSTRAP_EMAIL` và
+`ADMIN_BOOTSTRAP_PASSWORD` trong `.env` (file bị Git bỏ qua), rồi tạo lại container API
+để nạp cấu hình. Chạy lệnh bootstrap một lần khi database chưa có tài khoản Admin:
 
 ```powershell
-docker compose --env-file .env -f infra/docker/compose.yml exec -e AuthBootstrap__Email -e AuthBootstrap__Password api dotnet TeaPremium.Api.dll bootstrap-admin
+docker compose --env-file .env -f infra/docker/compose.yml up -d --force-recreate api
+docker compose --env-file .env -f infra/docker/compose.yml exec api dotnet TeaPremium.Api.dll bootstrap-admin
 ```
 
 ```bash
-docker compose --env-file .env -f infra/docker/compose.yml exec -e AuthBootstrap__Email -e AuthBootstrap__Password api dotnet TeaPremium.Api.dll bootstrap-admin
+docker compose --env-file .env -f infra/docker/compose.yml up -d --force-recreate api
+docker compose --env-file .env -f infra/docker/compose.yml exec api dotnet TeaPremium.Api.dll bootstrap-admin
 ```
 
 Lệnh bootstrap chỉ được phép trong `Development`; không ghi mật khẩu vào repository. Dừng stack nhưng giữ dữ liệu bằng `docker compose --env-file .env -f infra/docker/compose.yml down`. Chỉ dùng `down --volumes` với database local mà bạn chủ động muốn xóa.
+
+Nếu muốn đồng bộ lại mật khẩu Admin local theo `.env`, chạy lệnh Development-only:
+
+```powershell
+docker compose --env-file .env -f infra/docker/compose.yml exec api dotnet TeaPremium.Api.dll reset-admin-password
+```
 
 ## Chạy từng thành phần độc lập
 
@@ -177,11 +187,11 @@ corepack pnpm --dir apps/web install --frozen-lockfile
 corepack pnpm --dir apps/web dev
 ```
 
-Mở `http://localhost:3000/admin/login`. Admin Catalog dùng Identity cookie, BFF và Catalog API thật. Xem [hướng dẫn Admin](docs/admin-catalog-ui.md) và [cấu hình R2](docs/media-storage.md). Khi có R2, đặt `R2_PUBLIC_BASE_URL` giống nhau cho API và Next.js để hiển thị ảnh qua CDN.
+UI Admin hiện chưa có route. API Admin và BFF vẫn giữ Identity cookie, phân quyền và CSRF để tích hợp lại khi bạn thiết kế giao diện mới. Xem [cấu hình R2](docs/media-storage.md) nếu cần upload ảnh qua API. Khi có R2, đặt `R2_PUBLIC_BASE_URL` giống nhau cho API và Next.js để hiển thị ảnh qua CDN.
 
 Storefront tại `http://localhost:3000` dùng Public API thật và SSR. Các trang danh mục, sản phẩm, tìm kiếm, giới thiệu và liên hệ đã có; không seed dữ liệu shop. Mặc định toàn site `noindex` cho tới khi cấu hình domain/thương hiệu thật và bật `SITE_INDEXABLE`. Xem [Storefront SEO](docs/storefront-seo.md) để cấu hình kênh liên hệ, cache và kiểm tra SEO/Lighthouse.
 
-CMS bài viết `/kien-thuc` và form liên hệ/lead đã có trong Prompt 6. Sau khi chạy migration, xem [hướng dẫn CMS và Lead](docs/content-leads.md) để thử Tiptap, Publish, consent, CORS và cấu hình GA4 thật nếu dùng.
+CMS bài viết `/kien-thuc` và form liên hệ/lead vẫn hoạt động qua Public API. Sau khi chạy migration, xem [hướng dẫn CMS và Lead](docs/content-leads.md) để kiểm tra Publish qua API, consent, CORS và cấu hình GA4 thật nếu dùng.
 
 ## Dữ liệu mẫu hình ảnh / CRM / báo cáo (Development)
 
@@ -211,6 +221,7 @@ corepack pnpm --dir apps/web install --frozen-lockfile
 corepack pnpm --dir apps/web lint
 corepack pnpm --dir apps/web typecheck
 corepack pnpm --dir apps/web test:seo
+corepack pnpm --dir apps/web test:commerce
 corepack pnpm --dir apps/web test:storefront
 corepack pnpm --dir apps/web build
 ```
@@ -228,15 +239,18 @@ Integration tests yêu cầu PostgreSQL thật và biến `TEAPREMIUM_TEST_CONNE
 - Cổng `5432`, `5080` hoặc `3000` đang dùng: đổi `POSTGRES_PORT`, `API_PORT`, `WEB_PORT` trong `.env`; cập nhật `NEXT_PUBLIC_SITE_URL` rồi build lại web.
 - `/health/live` trả 200 nhưng `/health/ready` trả 503: kiểm tra PostgreSQL/connection string và `docker compose ... logs api postgres`; migration/schema chưa có thì chạy service `migrate` thủ công.
 - Web không gọi được API: kiểm tra `API_BASE_URL=http://api:5080/api/v1` trong container và `NEXT_PUBLIC_API_BASE_URL` đã được build với cổng host đúng. CORS chỉ cho origin web đã cấu hình.
-- Login Admin thất bại: chạy bootstrap một lần cho Development, kiểm tra cùng origin/port và cookie/CSRF; không lưu token trong localStorage.
+- API Admin từ chối đăng nhập: chạy bootstrap một lần cho Development, kiểm tra cùng origin/port và cookie/CSRF; không lưu token trong localStorage. UI đăng nhập chưa được dựng lại.
 - Upload ảnh báo 503: chưa có bộ cấu hình R2 thật hoặc bucket/CORS/CDN chưa đúng. Các phần catalog/CMS/lead vẫn thử được khi chưa có R2.
 - Windows chặn DLL khi chạy .NET trực tiếp: dùng Compose Linux cho local hoặc chạy test trên Linux/CI; không tắt Application Control để xử lý.
 
 ## Giới hạn hiện tại
 
-- Đổi slug Published của Product, Category và Article tạo redirect 301; Site Settings công khai được quản lý tại `/admin/settings`. Xem [SEO redirects](docs/seo-redirects.md) và [Site Settings](docs/site-settings.md). Cần áp dụng migration `AddSeoRedirectsAndSiteSettings` bằng bước migrate có review trước khi chạy API bản mới.
+- Đổi slug Published của Product, Category và Article tạo redirect 301; Site Settings công khai vẫn được quản lý qua Admin API, chưa có UI. Xem [SEO redirects](docs/seo-redirects.md) và [Site Settings](docs/site-settings.md). Cần áp dụng migration `AddSeoRedirectsAndSiteSettings` bằng bước migrate có review trước khi chạy API bản mới.
 - Chưa xác nhận R2, GA4/GSC account thật hoặc live chat hai chiều. GA4 chỉ tải sau consent và khi đã cấu hình Measurement ID thật.
 - Chưa có chính sách tự động lưu giữ/xóa lead; phải chốt trước Production.
-- Giá công khai, cart, order, checkout, payment và bảng commerce không thuộc MVP này.
+- Storefront vẫn không có giá công khai, cart, checkout hoặc payment. Đơn tư vấn/chốt ngoài
+  website được ghi nhận **chỉ trong Admin**; xem [CRM và đơn nội bộ](docs/commerce-crm-sales.md).
+- Bộ backup mã hóa đã có cấu hình mẫu nhưng chỉ bảo vệ Production sau khi operator cấu hình
+  bucket riêng, scheduler và restore drill; xem [backup và khôi phục](docs/backup-and-restore.md).
 
 Contract và quy tắc Catalog backend được mô tả tại `docs/catalog-api.md`; luồng Identity/cookie/BFF tại `docs/auth.md`.

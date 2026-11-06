@@ -41,7 +41,8 @@ public sealed record CreateProductCommand(
     Guid? PrimaryCategoryId,
     Guid? BrandId,
     IReadOnlyCollection<Guid>? CategoryIds,
-    SeoInput? Seo);
+    SeoInput? Seo,
+    bool IsSellable = true);
 
 public sealed record UpdateProductCommand(
     string? Sku,
@@ -58,7 +59,8 @@ public sealed record UpdateProductCommand(
     Guid? BrandId,
     IReadOnlyCollection<Guid>? CategoryIds,
     SeoInput? Seo,
-    string? Status = null);
+    string? Status = null,
+    bool? IsSellable = null);
 
 public sealed record AdminProductListQuery(
     int Page = 1,
@@ -111,7 +113,8 @@ public sealed record AdminProductDetail(
     IReadOnlyList<AdminCategorySummary> Categories,
     IReadOnlyList<AdminProductMediaDto> Media,
     DateTimeOffset CreatedAtUtc,
-    DateTimeOffset UpdatedAtUtc);
+    DateTimeOffset UpdatedAtUtc,
+    bool IsSellable = true);
 
 public sealed record AdminCategorySummary(Guid Id, string Slug, string Name, string Status);
 

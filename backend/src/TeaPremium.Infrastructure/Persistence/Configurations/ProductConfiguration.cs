@@ -28,6 +28,8 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         });
 
         builder.HasKey(product => product.Id).HasName("pk_products");
+        builder.Property<uint>("Version").IsRowVersion();
+        builder.Property(product => product.IsSellable).HasColumnName("is_sellable").HasDefaultValue(true);
 
         builder.Property(product => product.Id)
             .HasColumnName("id")

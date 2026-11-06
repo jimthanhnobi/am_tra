@@ -5,10 +5,10 @@
 - CMS có `articles`, `article_categories`, `article_category_links`; bài viết liên kết tác giả Identity và ảnh bìa trong `media_assets`.
 - Admin API: `GET/POST /api/v1/admin/articles`, `GET/PATCH /{id}`, `GET /{id}/preview`, `POST /{id}/review`, `/publish`, `/archive`; danh mục bài viết dùng `/api/v1/admin/article-categories` (GET/POST/PATCH).
 - Public API: `GET /api/v1/public/articles` và `/{slug}` chỉ trả bài `Published`. Bài Published có `robotsIndex=false` vẫn trả 200 với metadata noindex trên HTML, nhưng không vào sitemap. Draft, InReview và Archived trả 404 ở detail. Đổi slug bài Published tạo redirect 301 theo [seo-redirects.md](seo-redirects.md).
-- Admin UI: `/admin/articles`, `/admin/articles/new`, `/admin/articles/[id]/edit`, `/admin/article-categories`; editor Tiptap lưu JSON. Backend chỉ tạo HTML từ JSON bằng whitelist node/mark và sanitizer. Không nhận HTML từ client làm nguồn nội dung.
+- UI Admin đã được gỡ để thiết kế lại. Backend vẫn tạo HTML từ JSON bằng whitelist node/mark và sanitizer; không nhận HTML từ client làm nguồn nội dung.
 - Storefront `/kien-thuc` và `/kien-thuc/[slug]` render trên server, metadata/canonical/Article JSON-LD/breadcrumb/sitemap lấy từ Public API. JSON-LD không tự thêm tác giả vì Identity chỉ có email nội bộ, không có tên tác giả công khai đã xác nhận.
 - Lead: `leads` và `contact_events` là hai bảng riêng. Chỉ form liên hệ có consent mới tạo lead. Nhấn Zalo/Facebook/hotline, nếu khách đồng ý ghi nhận, tạo contact event; không tạo lead từ lượt nhấn.
-- Admin `/admin/leads` xem và đổi trạng thái với `Leads.Read` / `Leads.Manage`. Editor không có quyền lead. API vẫn kiểm tra quyền, cookie và CSRF.
+- Admin API xem và đổi trạng thái Lead với `Leads.Read` / `Leads.Manage`. Editor không có quyền lead. API vẫn kiểm tra quyền, cookie và CSRF.
 
 ## Migration và chạy local
 
@@ -53,7 +53,7 @@ corepack pnpm --dir apps/web test:storefront
 
 Integration tests dùng PostgreSQL riêng qua `TEAPREMIUM_TEST_CONNECTION_STRING` và cần migration được test fixture chạy trong database đó. Kiểm tra thủ công: Editor tạo Draft, preview nội dung, Publisher publish, xem HTML `/kien-thuc/[slug]`; Archive trả 404; gửi form có/không consent, honeypot và thử >5 request/phút; kiểm tra Network CORS từ origin web thật. Chạy Lighthouse/SEO trên HTTPS với nội dung và ảnh thật. Không coi Publish là được Google index ngay.
 
-Playwright chạy Chromium trên API và web trỏ **database kiểm thử riêng**, không trỏ database Development đang chứa dữ liệu. Chỉ sau khi đã xác nhận DB thử, đặt `E2E_ISOLATED_DATABASE=true`, `E2E_WEB_BASE_URL`, `E2E_ADMIN_EMAIL` và `E2E_ADMIN_PASSWORD` của Admin thử rồi chạy `corepack pnpm --dir apps/web test:e2e`. Trên máy đã cài Chrome, có thể đặt `E2E_CHROME_CHANNEL=chrome`; nếu không, cài Chromium bằng `corepack pnpm --dir apps/web exec playwright install chromium`. Test Product còn cần `E2E_MEDIA_ASSET_ID` trỏ tới MediaAsset fixture có tên `product-fixture.webp` trong DB thử; nếu thiếu, riêng test đó được skip. Fixture metadata ảnh **không** kiểm tra R2 upload thật. Các bài test tạo bài viết, sản phẩm và lead thử; chỉ dọn dữ liệu thuộc database kiểm thử do lượt này tạo. Nếu thiếu tài khoản test hoặc marker DB, lệnh thất bại rõ ràng. Bộ test kiểm tra Draft, preview bài viết, Publish, HTML/JSON-LD public, Archive 404, gửi lead có consent và đổi trạng thái trong Admin. Quyền Editor bị từ chối Publish/đọc lead đã có integration test; chưa có browser test riêng cho role này.
+Playwright hiện chỉ kiểm tra storefront và hiệu năng public trên database kiểm thử riêng. UI Admin và các browser test liên quan đã được gỡ để thiết kế lại; kiểm tra quyền và nghiệp vụ Admin nằm ở backend integration tests. Đặt `E2E_ISOLATED_DATABASE=true`, `E2E_WEB_BASE_URL` và `API_BASE_URL` trỏ tới test stack loopback trước khi chạy `corepack pnpm --dir apps/web test:e2e`.
 
 Local development hiện dùng SDK pin `10.0.302` và Compose đầy đủ PostgreSQL/API/Next.js. Xem [README](../README.md) để khởi động, chạy migration thủ công và bootstrap Admin Development. Kết quả lệnh đã chạy, smoke Docker và giới hạn kiểm chứng nằm ở [verification.md](verification.md). Không dùng Compose local làm cấu hình deploy Production.
 

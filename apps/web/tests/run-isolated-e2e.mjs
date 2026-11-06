@@ -11,9 +11,8 @@ const playwright = fileURLToPath(new URL("../node_modules/@playwright/test/cli.j
 const web = process.env.E2E_WEB_BASE_URL;
 const api = process.env.API_BASE_URL;
 if (process.env.E2E_ISOLATED_DATABASE !== "true" || !web || !api ||
-    new URL(web).hostname !== "127.0.0.1" || new URL(api).hostname !== "127.0.0.1" ||
-    !process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD)
-  throw new Error("Isolated E2E requires loopback web/API URLs, disposable DB marker and test Admin credentials.");
+    new URL(web).hostname !== "127.0.0.1" || new URL(api).hostname !== "127.0.0.1")
+  throw new Error("Isolated E2E requires loopback web/API URLs and a disposable DB marker.");
 
 const webUrl = new URL(web);
 const child = spawn(process.execPath, [next, "start", "--hostname", "127.0.0.1", "--port", webUrl.port], {
@@ -25,7 +24,7 @@ try {
   let ready = false;
   for (let attempt = 0; attempt < 80; attempt++) {
     if (child.exitCode !== null) throw new Error(`Isolated Next stopped: ${output}`);
-    try { if ((await fetch(`${web}/admin/login`)).ok) { ready = true; break; } } catch { /* still starting */ }
+    try { if ((await fetch(web)).ok) { ready = true; break; } } catch { /* still starting */ }
     await delay(250);
   }
   if (!ready) throw new Error(`Isolated Next did not become ready: ${output}`);

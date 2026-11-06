@@ -74,6 +74,22 @@ public sealed class Product
 
     public PublicationStatus Status { get; private set; } = PublicationStatus.Draft;
 
+    public bool IsSellable { get; private set; } = true;
+
+    public void SetSellable(bool value)
+    {
+        IsSellable = value;
+        Touch();
+    }
+
+    public void ReturnToDraft()
+    {
+        if (Status is not (PublicationStatus.InReview or PublicationStatus.Archived))
+            throw new InvalidOperationException("Only InReview or Archived products can return to Draft.");
+        Status = PublicationStatus.Draft;
+        Touch();
+    }
+
     public Guid? PrimaryCategoryId { get; private set; }
 
     public Guid? BrandId { get; private set; }

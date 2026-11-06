@@ -19,5 +19,11 @@ public static partial class ApiLog
         ILogger logger,
         bool userCreated,
         bool roleGranted);
+
+    [LoggerMessage(
+        EventId = 3,
+        Level = LogLevel.Information,
+        Message = "Development admin password reset completed")]
+    public static partial void AdminPasswordResetCompleted(ILogger logger);
 }
 

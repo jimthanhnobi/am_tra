@@ -32,6 +32,7 @@ public sealed class CatalogDatabaseTests(PostgreSqlFixture database)
             "article_categories",
             "article_category_links",
             "articles",
+            "audit_logs",
             "brands",
             "categories",
             "contact_events",

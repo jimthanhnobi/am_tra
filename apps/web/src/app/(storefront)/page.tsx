@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, BookOpenText, MessageCircle, Search } from "lucide-react";
+import { ArrowUpRight, BookOpenText, MessageCircle, Search } from "lucide-react";
 import { getSiteContext } from "@/lib/config/site-context";
 import { getPublicCategories, getPublicProducts } from "@/lib/api/public";
 import { getPublicArticles } from "@/lib/api/articles";
@@ -7,6 +7,8 @@ import { pageMetadata } from "@/lib/seo/policy";
 import { ArticleCard } from "@/components/storefront/article-card";
 import { CatalogImage, EmptyCatalog, ProductGrid } from "@/components/storefront/catalog";
 import { ContactLinks } from "@/components/storefront/contact";
+import { HomeOrbit } from "@/components/storefront/home-orbit";
+import type { PublicImage, PublicProductCard } from "@/lib/api/public-types";
 
 export async function generateMetadata() {
   const { site } = await getSiteContext();
@@ -24,49 +26,17 @@ export default async function HomePage() {
     getPublicArticles(1, 3),
     getSiteContext(),
   ]);
-  const editorial = products.items.find((item) => item.coverImage?.publicUrl);
+  const orbitProducts = products.items.filter((item): item is PublicProductCard & { coverImage: PublicImage & { publicUrl: string } } => Boolean(item.coverImage?.publicUrl)).slice(0, 6);
   const mainCategories = categories.slice(0, 5);
   const story = profile.about?.trim();
 
   return <main id="noi-dung">
-    <section className="sf-home-hero">
-      <div className="sf-container sf-home-hero-grid">
-        <div className="sf-home-hero-copy">
-          <p className="sf-kicker flex items-center gap-3"><span className="sf-kicker-line" aria-hidden="true" /> Trà cụ &amp; phong vị sống chậm</p>
-          <h1 className="sf-home-title">Một chiếc ấm.<br /><em>Một khoảng tĩnh.</em><br />Một đời trà.</h1>
-          <p className="sf-copy mt-7 max-w-lg">Khám phá ấm trà và trà cụ qua hình dáng, chất liệu, câu chuyện sử dụng. Dành một chút thời gian để chọn món đồ thật sự phù hợp với cách thưởng trà của bạn.</p>
-          <div className="mt-9 flex flex-wrap gap-3">
-            <Link href="#bo-suu-tap" className="sf-button">Khám phá trà cụ <ArrowUpRight size={16} aria-hidden="true" /></Link>
-            <Link href="/kien-thuc" className="sf-button sf-button-outline">Đọc chuyện trà <ArrowRight size={16} aria-hidden="true" /></Link>
-          </div>
-          <div className="sf-hero-footnote"><span className="sf-hero-rule" aria-hidden="true" /> <span>Không vội chọn. Hãy bắt đầu từ điều bạn muốn hiểu.</span></div>
-        </div>
-        <div className="sf-home-hero-visual">
-          <div className="sf-home-hero-image">
-            {editorial?.coverImage?.publicUrl
-              ? <Link href={`/san-pham/${editorial.slug}`} className="block h-full" aria-label={`Khám phá ${editorial.name}`}>
-                  <CatalogImage image={editorial.coverImage} priority sizes="(max-width: 900px) 92vw, 560px" />
-                </Link>
-              : <div className="sf-hero-editorial-empty">
-                  <span className="sf-hero-ring" aria-hidden="true" />
-                  <span className="sf-kicker">Tĩnh · Mộc · Sâu</span>
-                  <p className="font-serif text-[clamp(1.7rem,3vw,2.4rem)] leading-snug">Thưởng trà,<br />thưởng một khoảng lặng.</p>
-                </div>}
-          </div>
-          <div className="sf-home-image-caption">
-            <span className="sf-kicker text-[#d1b88c]!">{editorial ? "Trong bộ sưu tập" : "Tinh thần TeaPremium"}</span>
-            <p className="mt-2 font-serif text-xl leading-snug">{editorial ? editorial.name : "Không gian dành cho trà cụ và câu chuyện thưởng trà."}</p>
-            {editorial && <Link href={`/san-pham/${editorial.slug}`} className="mt-3 inline-flex items-center gap-2 text-sm text-[#f1e9d9] underline underline-offset-4">Xem sản phẩm <ArrowUpRight size={15} aria-hidden="true" /></Link>}
-          </div>
-          <span className="sf-hero-side-note" aria-hidden="true">THE ART OF TEAWARE</span>
-        </div>
-      </div>
-    </section>
+    <HomeOrbit products={orbitProducts} />
 
     <section id="bo-suu-tap" className="sf-container sf-section scroll-mt-20">
       <div className="sf-section-head">
-        <div><p className="sf-kicker">01 / Khám phá</p><h2 className="sf-heading mt-4">Trà cụ theo <em className="sf-serif-em">cảm hứng.</em></h2>
-          <p className="sf-copy mt-5 max-w-xl">Mỗi dáng ấm, chất liệu và cách dùng mang đến một trải nghiệm riêng. Chọn bộ sưu tập để tìm hiểu sâu hơn.</p>
+        <div><p className="sf-kicker">01 / Khám phá trà cụ</p><h2 className="sf-heading mt-4">Bắt đầu từ <em className="sf-serif-em">món trà cụ hợp bạn.</em></h2>
+          <p className="sf-copy mt-5 max-w-xl">Tìm hiểu từng dáng ấm, chất liệu và cách dùng. Mỗi bộ sưu tập mở ra một góc nhìn khác trên bàn trà.</p>
         </div>
         <Link href="/tim-kiem" className="sf-text-link inline-flex items-center gap-2">Tìm sản phẩm <ArrowUpRight size={16} aria-hidden="true" /></Link>
       </div>
@@ -108,7 +78,7 @@ export default async function HomePage() {
     <section className="sf-philosophy" aria-label="Lựa chọn trà cụ">
       <div className="sf-container sf-philosophy-grid">
         <div className="max-w-lg">
-          <p className="sf-kicker text-[#d1b88c]!">03 / Tĩnh · Mộc · Sâu</p>
+          <p className="sf-kicker text-[#d1b88c]!">03 / Chọn trà cụ</p>
           <h2 className="mt-6 font-serif text-[clamp(2.5rem,4.5vw,4.8rem)] leading-[1.2] tracking-[-.045em] text-[#fff9ec]">Trà ngon cần sự tĩnh.<br /><em className="font-normal text-[#d1b88c]">Trà cụ cần sự hiểu.</em></h2>
           <p className="mt-7 max-w-md text-base leading-8 text-[#e1e8df]">Mỗi lựa chọn bắt đầu bằng việc hiểu chất liệu, dung tích, thói quen thưởng trà và nhu cầu sử dụng — trước khi quyết định món đồ nào sẽ đồng hành cùng mình.</p>
           <Link href="/gioi-thieu" className="mt-9 inline-flex items-center gap-2 border-b border-[#d1b88c] pb-2 text-sm font-semibold text-[#f7f4ec]">Về không gian trà cụ <ArrowUpRight size={16} aria-hidden="true" /></Link>

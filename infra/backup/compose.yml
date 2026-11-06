@@ -1,0 +1,18 @@
+name: teapremium-backup
+services:
+  backup:
+    build: .
+    read_only: true
+    tmpfs:
+      - /tmp:size=1073741824,mode=1777
+    env_file:
+      - ${BACKUP_ENV_FILE:?Set an absolute path to the private backup env file}
+    networks:
+      - database
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+networks:
+  database:
+    external: true
+    name: ${BACKUP_DATABASE_NETWORK:?Set the network of the source PostgreSQL}

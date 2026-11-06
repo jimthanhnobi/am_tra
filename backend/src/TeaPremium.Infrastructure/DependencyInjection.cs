@@ -70,11 +70,13 @@ public static class DependencyInjection
             .AddDefaultTokenProviders();
 
         services.AddScoped<IAdminBootstrapper, DevelopmentAdminBootstrapper>();
+        services.AddScoped<IAdminUserService, AdminUserService>();
         services.AddScoped<IAdminCatalogSummaryQuery, AdminCatalogSummaryQuery>();
         services.AddScoped<ICatalogDataStore, CatalogDataStore>();
         services.AddScoped<IArticleStore, ArticleStore>();
         services.AddScoped<ILeadStore, LeadStore>();
         services.AddScoped<ICommerceStore, CommerceStore>();
+        services.AddScoped<TeaPremium.Application.Security.IAuditQuery, AuditQuery>();
         services.AddScoped<ISeoRedirectStore, SeoRedirectStore>();
         services.AddScoped<ISiteSettingsStore, SiteSettingsStore>();
         services.AddScoped<IMediaDataStore, MediaDataStore>();

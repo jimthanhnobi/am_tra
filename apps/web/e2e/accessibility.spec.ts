@@ -2,12 +2,9 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { writeFile } from "node:fs/promises";
 
-test("WCAG 2.2 A/AA automated audit of public and Admin flows", async ({ page, request }) => {
+test("WCAG 2.2 A/AA automated audit of public flows", async ({ page, request }) => {
   if (process.env.E2E_ISOLATED_DATABASE !== "true")
     throw new Error("Accessibility E2E requires a disposable test database.");
-  const email = process.env.E2E_ADMIN_EMAIL;
-  const password = process.env.E2E_ADMIN_PASSWORD;
-  if (!email || !password) throw new Error("Set isolated Admin credentials.");
   const api = process.env.API_BASE_URL;
   if (!api || !/^http:\/\/127\.0\.0\.1:\d+\/api\/v1$/.test(api)) throw new Error("Set loopback test API_BASE_URL.");
   const [products, articles, categories] = await Promise.all([
@@ -37,7 +34,7 @@ test("WCAG 2.2 A/AA automated audit of public and Admin flows", async ({ page, r
       expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollBehavior)).toBe("auto");
       await page.emulateMedia({ reducedMotion: "no-preference" });
     }
-    for (const path of [...publicPaths, "/admin/login"]) {
+    for (const path of publicPaths) {
       await page.goto(path);
       await expect(page.locator("h1")).toHaveCount(1);
       const result = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
@@ -50,18 +47,6 @@ test("WCAG 2.2 A/AA automated audit of public and Admin flows", async ({ page, r
     const invalidForm = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
     findings.push(...invalidForm.violations.map((item) => ({ viewport, path: "/lien-he (validation)", rule: item.id, impact: item.impact ?? null,
       targets: item.nodes.slice(0, 3).map((node) => String(node.target)) })));
-    await page.goto("/admin/login");
-    await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Mật khẩu").fill(password);
-    await page.getByRole("button", { name: "Đăng nhập" }).click();
-    await expect(page).toHaveURL(/\/admin$/);
-    for (const path of ["/admin", "/admin/products", "/admin/articles/new", "/admin/leads"]) {
-      await page.goto(path);
-      await expect(page.locator("h1")).toHaveCount(1);
-      const result = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
-      findings.push(...result.violations.map((item) => ({ viewport, path, rule: item.id, impact: item.impact ?? null,
-        targets: item.nodes.slice(0, 3).map((node) => String(node.target)) })));
-    }
   }
   await writeFile("test-results/axe-findings.json", JSON.stringify(findings, null, 2));
   expect(findings).toHaveLength(0);

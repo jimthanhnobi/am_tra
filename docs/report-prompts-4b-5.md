@@ -166,7 +166,6 @@ Không cần mở rộng sang commerce hay thay kiến trúc hiện tại để 
 
 Tài liệu sử dụng:
 
-- [Admin Catalog UI](admin-catalog-ui.md): routes, quyền, cách kiểm tra local.
 - [Media storage](media-storage.md): env R2, bucket/CORS/CDN, upload flow và giới hạn.
 - [Storefront SEO](storefront-seo.md): routes, cấu hình, cache, SEO, tests và Lighthouse.
 - [Auth](auth.md), [Catalog API](catalog-api.md), [Architecture decisions](architecture-decisions.md), [README](../README.md).

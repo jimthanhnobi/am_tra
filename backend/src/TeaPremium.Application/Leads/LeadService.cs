@@ -72,6 +72,9 @@ public sealed class LeadService(ILeadStore store, TimeProvider clock)
         return store.ListAsync(page, pageSize, ct);
     }
 
+    public async Task<LeadDto> GetAsync(Guid id, CancellationToken ct) =>
+        Map(await store.FindAsync(id, ct) ?? throw new LeadNotFoundException("Lead not found."));
+
     public async Task<LeadDto> SetStatusAsync(Guid id, string status, CancellationToken ct)
     {
         if (!Enum.TryParse<LeadStatus>(status, true, out var parsed) || !Enum.IsDefined(parsed))

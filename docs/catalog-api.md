@@ -75,13 +75,16 @@ Example create payload:
 
 ## Workflow and publish guards
 
-Product status follows `Draft -> InReview -> Published -> Archived`:
+Product status normally follows `Draft -> InReview -> Published -> Archived`:
 
 - Create always produces Draft.
-- Product `PATCH` can move only Draft to InReview.
+- Product `PATCH` can move Draft to InReview and return InReview/Archived to Draft for correction.
 - Publishing and archiving use their dedicated endpoints and require `Catalog.Publish`.
 - Publish requires a non-empty name, summary, structured description, sanitized HTML description, a Published primary category attached to the product, exactly one cover with non-empty ALT text, SEO title, and meta description.
-- A Published product is revalidated on edits. Its slug is immutable until a redirect workflow exists.
+- A Published product is revalidated on edits. Changing the slug of a product that has ever been
+  Published creates a direct redirect, including when the product was reopened from Archived.
+- `isSellable` is an Admin-only commerce flag independent from publication. It never makes a
+  Draft/Archived product visible through the Public API.
 
 Category status follows the same order through `PATCH`. Publishing requires content and SEO metadata; a parent must be Published first. Self-parenting, missing parents, and hierarchy cycles are rejected. A Published category used by a Published product cannot be archived. Published category slugs are immutable. Category and brand hard-delete endpoints intentionally do not exist.
 

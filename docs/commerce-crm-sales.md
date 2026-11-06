@@ -14,7 +14,7 @@ Customer/Order/Report endpoints share the established `Leads.Read` / `Leads.Mana
 
 - `customers`: unique Vietnamese E.164-normalized phone, initial acquisition source, origin (legacy_import/new/unknown), explicit prior-purchase indicator and bounded text tags. The customer does **not** inherit consent from their phone number.
 - `customer_interactions`: handwritten consulting history with channel, kind, notes, timestamp. This is a log, not automated reading of personal Zalo messages.
-- `sales_orders`: private admin-created confirmed/completed/cancelled order, stable idempotency `request_id`, unique human-readable code, immutable acquisition and returning status snapshot, optional existing Lead ID.
+- `sales_orders`: private admin-created confirmed/completed/cancelled/returned order, stable idempotency `request_id`, unique human-readable code, business dates, immutable acquisition snapshot, optional existing Lead ID. `Completed` means **delivered successfully**, not necessarily cash collected.
 - `sales_order_items`: SKU/product-name snapshots, quantity, monetary unit-price and optional historical unit-cost; product link is internal and does not change the snapshot.
 - Existing `leads` and `contact_events` remain intact: form submission is a Lead; click is **not** a Lead nor a completed OA conversation.
 
@@ -34,11 +34,13 @@ API root: `/api/v1`; all are **Admin-only**, cookie + CSRF on unsafe methods.
 | GET | `admin/customers/{id}/interactions` | Latest 100 notes |
 | POST | `admin/customers/{id}/interactions` | Add manual note |
 | GET | `admin/orders` | Order listing |
+| GET | `admin/orders/products?search=` | Search all products explicitly marked sellable, independent of publishing status |
 | POST | `admin/orders` | Create internal confirmed order |
 | GET | `admin/orders/{id}` | Detail + immutable item snapshots |
-| POST | `admin/orders/{id}/complete` | Complete a Confirmed order |
-| POST | `admin/orders/{id}/cancel` | Cancel a Confirmed order |
-| GET | `admin/reports/sales-overview?from=...&to=...` | Completed orders in exclusive UTC interval |
+| POST | `admin/orders/{id}/complete` | Mark a Confirmed order delivered successfully |
+| POST | `admin/orders/{id}/cancel` | Cancel a Confirmed order; reason required |
+| POST | `admin/orders/{id}/return` | Mark a delivered order fully returned; reason required |
+| GET | `admin/reports/sales-overview?fromDate=YYYY-MM-DD&toDate=YYYY-MM-DD` | Delivered orders in a Vietnam business-date interval |
 
 Example create customer:
 
@@ -72,7 +74,8 @@ Example import request:
 ```
 
 Create an order with a client-generated stable UUID `requestId` reused on retry.
-`productId` must point to a **Published** product; price is private, chosen by admin.
+`productId` must point to a product explicitly marked **sellable** in Admin. Publishing controls
+public visibility; sellability controls private order entry. Price remains private and is chosen by Admin.
 
 ```json
 {
@@ -94,7 +97,9 @@ Create an order with a client-generated stable UUID `requestId` reused on retry.
 
 In the report: a completed order belongs to **one closing channel** and **one original acquisition source**.
 These are independent *alternative breakdowns*, **not additive**. Unverified acquisition stays `unknown`.
-The report counts `CompletedAtUtc` in the half-open range `[from, to)`, not draft/confirmed orders.
+The report accepts Vietnam calendar dates and converts them to the UTC half-open range `[from, to)`.
+It counts delivery time (`CompletedAtUtc`), not order-entry time or confirmed orders. A fully returned
+order is removed from the original delivery period so historical reports are restated consistently.
 `KnownCost` excludes order lines without cost: `UnknownCostLines > 0` means gross profit is incomplete.
 Orders with earlier imported purchases can set `HadPriorPurchase=true`. **Unknown purchase history is reported as a third category**: imported contacts with no verified prior purchases have nullable `is_returning` until a completed order establishes repeat history. They must not be automatically counted as first-time buyers.
 
@@ -123,7 +128,8 @@ Use `zalo_personal` for personal Zalo, `zalo_oa` for OA, and `website` only when
 - Import is bounded to 1,000 records/request, no overwrites; unique indexes protect repeated numbers and request IDs.
 - Error responses must use ProblemDetails 404/409/422.
 - Take a backup and review the additive migration before deploying; Production API must not automatically migrate.
-- Only `Confirmed -> Completed` or `Confirmed -> Cancelled` is allowed; cancelled orders have zero completed revenue.
+- Only `Confirmed -> Completed`, `Confirmed -> Cancelled`, and `Completed -> Returned` are allowed.
+  Cancellation and return require a reason. Completed means delivered successfully; cancelled and returned orders have zero delivered revenue.
 - Refunds, partial payments, discounts, shipping, multiple currencies, Zalo OA webhook automation, campaign-spend ROI and cross-device attribution are **not included** in this first MVP. Do not present the completed-revenue number as cash received.
 - Imported contacts or new OA followers are not proof of newly acquired customers.
 
@@ -149,7 +155,7 @@ Do not claim tests have passed unless observed in CI or local runs.
 
 - Public storefront continues to have no checkout or customer-login functionality.
 - CRM import is CSV, not an XLSX file reader; Excel users should export UTF-8 CSV with comma separators.
-- Customers are paginated in the Admin. The create-order product selector currently loads the first 50 Published products; product search and multi-line order editing are follow-ups.
-- Existing Leads remain web-form leads; personal-Zalo consultations are recorded as customer interaction notes, not treated as website leads. Explicit lead/customer linking and lead-to-order conversion should be added when validated by real usage.
+- Customers are paginated in Admin. Order entry searches sellable products by name/SKU and supports multiple lines.
+- Existing Leads remain web-form leads; personal-Zalo consultations are recorded as customer interaction notes, not treated as website leads. Admin can start an order from a Lead, but linkage is accepted only when the selected customer's normalized phone matches that Lead.
 - Marketing opt-in/opt-out collection and verified OA UID association are separate follow-up modules; **do not send bulk outreach based solely on imported phone numbers**.
 - Import rows receive the selected cohort tag. Confirmed historical purchases are not inferred during CSV import.

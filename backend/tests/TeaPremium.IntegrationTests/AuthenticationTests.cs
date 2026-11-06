@@ -4,10 +4,16 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TeaPremium.Api.Contracts.Authentication;
+using TeaPremium.Application.Authentication;
 using TeaPremium.Application.Security;
 using TeaPremium.Infrastructure.Identity;
+using TeaPremium.Infrastructure.Persistence;
+using TeaPremium.Application.Commerce;
+using TeaPremium.Domain.Catalog;
+using TeaPremium.Domain.Common;
 
 namespace TeaPremium.IntegrationTests;
 
@@ -53,6 +59,57 @@ public sealed class AuthenticationTests : IAsyncLifetime, IDisposable
         Assert.Equal(
             "application/problem+json",
             response.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
+    public async Task OnlyAuthorizedAdminCanRegisterAnEditorWithCsrf()
+    {
+        var email = $"editor-created-{Guid.NewGuid():N}@integration.test";
+        try
+        {
+            using var anonymous = CreateClient();
+            using var anonymousResponse = await anonymous.PostAsJsonAsync(
+                "/api/v1/admin/users", new CreateAdminUserCommand(email, Password, AdminRoles.Editor));
+            Assert.Equal(HttpStatusCode.Unauthorized, anonymousResponse.StatusCode);
+
+            using var unprivileged = CreateClient();
+            await LoginAsync(unprivileged, _unprivilegedEmail);
+            var unprivilegedCsrf = await GetAntiforgeryTokenAsync(unprivileged);
+            using var forbiddenRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/admin/users")
+            { Content = JsonContent.Create(new CreateAdminUserCommand(email, Password, AdminRoles.Editor)) };
+            forbiddenRequest.Headers.Add(unprivilegedCsrf.HeaderName, unprivilegedCsrf.RequestToken);
+            using var forbidden = await unprivileged.SendAsync(forbiddenRequest);
+            Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+
+            using var admin = CreateClient();
+            await LoginAsync(admin, _adminEmail);
+            using var missingCsrf = await admin.PostAsJsonAsync(
+                "/api/v1/admin/users", new CreateAdminUserCommand(email, Password, AdminRoles.Editor));
+            Assert.Equal(HttpStatusCode.BadRequest, missingCsrf.StatusCode);
+
+            var csrf = await GetAntiforgeryTokenAsync(admin);
+            async Task<HttpResponseMessage> RegisterAsync(string role)
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/admin/users")
+                { Content = JsonContent.Create(new CreateAdminUserCommand(email, Password, role)) };
+                request.Headers.Add(csrf.HeaderName, csrf.RequestToken);
+                return await admin.SendAsync(request);
+            }
+            using var rejectedRole = await RegisterAsync(AdminRoles.Admin);
+            Assert.Equal(HttpStatusCode.UnprocessableEntity, rejectedRole.StatusCode);
+            using var created = await RegisterAsync(AdminRoles.Editor);
+            Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+            using var duplicate = await RegisterAsync(AdminRoles.Editor);
+            Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
+
+            await using var scope = _factory.Services.CreateAsyncScope();
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var user = await users.FindByEmailAsync(email);
+            Assert.NotNull(user);
+            Assert.True(await users.IsInRoleAsync(user, AdminRoles.Editor));
+            Assert.True(await users.CheckPasswordAsync(user, Password));
+        }
+        finally { await DeleteUserIfPresentAsync(email); }
     }
 
     [Fact]
@@ -212,6 +269,81 @@ public sealed class AuthenticationTests : IAsyncLifetime, IDisposable
         var response = await SendLoginAsync(client, csrf, email, Password);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         return response;
+    }
+
+    [Fact]
+    public async Task ReportsAcceptVietnamMonthRangeAndRejectInvalidOrMixedRanges()
+    {
+        using var client = CreateClient();
+        await LoginAsync(client, _adminEmail);
+        var today = TeaPremium.Domain.Common.BusinessCalendar.DateAt(DateTimeOffset.UtcNow);
+        var first = new DateOnly(today.Year, today.Month, 1);
+        var next = first.AddMonths(1);
+        using var response = await client.GetAsync(FormattableString.Invariant(
+            $"/api/v1/admin/reports/sales-overview?fromDate={first:yyyy-MM-dd}&toDate={next:yyyy-MM-dd}"));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var invalid = await client.GetAsync("/api/v1/admin/reports/sales-overview?fromDate=2026-12-01&toDate=2026-11-01");
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, invalid.StatusCode);
+        using var mixed = await client.GetAsync("/api/v1/admin/reports/sales-overview?fromDate=2026-11-01&toDate=2026-12-01&from=2026-11-01T00:00:00Z");
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, mixed.StatusCode);
+        using var denied = CreateClient();
+        await LoginAsync(denied, _unprivilegedEmail);
+        using var auditResponse = await denied.GetAsync("/api/v1/admin/audit");
+        Assert.Equal(HttpStatusCode.Forbidden, auditResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task OrderHttpWorkflowRequiresCsrfAndKeepsDraftProductAndAuditPrivate()
+    {
+        using var client = CreateClient();
+        await LoginAsync(client, _adminEmail);
+        var csrf = await GetAntiforgeryTokenAsync(client);
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var commerce = scope.ServiceProvider.GetRequiredService<CommerceService>();
+        var product = new Product("http-order-" + Guid.NewGuid().ToString("N"), "Test draft", "Test",
+            "{}", "", "test", "{}", new SeoMetadata(null, null));
+        var disabled = new Product("disabled-" + Guid.NewGuid().ToString("N"), "Test disabled", "Test",
+            "{}", "", "test", "{}", new SeoMetadata(null, null));
+        disabled.SetSellable(false);
+        db.Products.AddRange(product, disabled); await db.SaveChangesAsync();
+        var customer = await commerce.CreateCustomerAsync(new("HTTP test customer",
+            "09" + Random.Shared.Next(10000000, 99999999).ToString(System.Globalization.CultureInfo.InvariantCulture),
+            "new", "unknown", false, []), CancellationToken.None);
+        var input = new CreateOrderInput(customer.Id, Guid.NewGuid(), null, "phone", null,
+            [new(product.Id, 1, 100000m, null)]);
+        try
+        {
+            using var noCsrf = await client.PostAsJsonAsync("/api/v1/admin/orders", input);
+            Assert.Equal(HttpStatusCode.BadRequest, noCsrf.StatusCode);
+            client.DefaultRequestHeaders.Add(csrf.HeaderName, csrf.RequestToken);
+            using var rejected = await client.PostAsJsonAsync("/api/v1/admin/orders", input with
+            { Items = [new(disabled.Id, 1, 100000m, null)] });
+            Assert.Equal(HttpStatusCode.UnprocessableEntity, rejected.StatusCode);
+            using var created = await client.PostAsJsonAsync("/api/v1/admin/orders", input);
+            Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+            var order = (await created.Content.ReadFromJsonAsync<OrderDto>())!;
+            using var completed = await client.PostAsJsonAsync($"/api/v1/admin/orders/{order.Id}/complete", new OrderTransitionInput());
+            Assert.Equal(HttpStatusCode.OK, completed.StatusCode);
+            using var staleCancel = await client.PostAsJsonAsync($"/api/v1/admin/orders/{order.Id}/cancel", new OrderTransitionInput(Reason: "Stale tab"));
+            Assert.Equal(HttpStatusCode.Conflict, staleCancel.StatusCode);
+            Assert.Equal("application/problem+json", staleCancel.Content.Headers.ContentType?.MediaType);
+            using var noReason = await client.PostAsJsonAsync($"/api/v1/admin/orders/{order.Id}/return", new OrderTransitionInput());
+            Assert.Equal(HttpStatusCode.UnprocessableEntity, noReason.StatusCode);
+            using var returned = await client.PostAsJsonAsync($"/api/v1/admin/orders/{order.Id}/return", new OrderTransitionInput(Reason: "Full return"));
+            Assert.Equal(HttpStatusCode.OK, returned.StatusCode);
+            using var publicProduct = await client.GetAsync($"/api/v1/public/products/{product.Slug}");
+            Assert.Equal(HttpStatusCode.NotFound, publicProduct.StatusCode);
+            var audit = await db.AuditLogs.Where(x => x.EntityId == order.Id).ToArrayAsync();
+            Assert.Equal(3, audit.Length);
+            Assert.All(audit, x => Assert.NotNull(x.ActorUserId));
+        }
+        finally
+        {
+            await db.SalesOrders.Where(x => x.CustomerId == customer.Id).ExecuteDeleteAsync();
+            await db.Customers.Where(x => x.Id == customer.Id).ExecuteDeleteAsync();
+            await db.Products.Where(x => x.Id == product.Id || x.Id == disabled.Id).ExecuteDeleteAsync();
+        }
     }
 
     private static async Task<HttpResponseMessage> SendLoginAsync(

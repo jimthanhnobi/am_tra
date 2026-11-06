@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { apiConfig } from "@/lib/api/config";
+import { trustedClientIp } from "@/lib/api/trusted-client-ip";
 
 const safeMethods = new Set(["GET", "HEAD", "OPTIONS"]);
 const forwardedRequestHeaders = [
@@ -48,6 +49,11 @@ export async function proxyAdminRequest(
   }
 
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
+  const clientIp = trustedClientIp(request.headers, process.env.BFF_TRUST_PROXY_HEADERS === "true");
+  if (clientIp) {
+    headers.set("x-forwarded-for", clientIp);
+    headers.set("x-forwarded-proto", new URL(process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin).protocol.slice(0, -1));
+  }
 
   try {
     const upstreamResponse = await fetch(upstreamUrl, {

@@ -60,6 +60,8 @@ jobs:
         run: corepack pnpm --dir apps/web typecheck
       - name: SEO policies
         run: corepack pnpm --dir apps/web test:seo
+      - name: Commerce dates and CSV import
+        run: corepack pnpm --dir apps/web test:commerce
       - name: Storefront HTTP integration
         run: corepack pnpm --dir apps/web test:storefront
       - name: Build
